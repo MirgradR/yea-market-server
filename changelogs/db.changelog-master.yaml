@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: entities/user.changelog.yaml
+      relativeToChangelogFile: true
+

@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-users-table
+      author: Ruslan
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(255)
+              - column:
+                  name: last_name
+                  type: varchar(255)
+              - column:
+                  name: password_hash
+                  type: varchar(255)
+              - column:
+                  name: phone
+                  type: varchar(255)
+              - column:
+                  name: country
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: city
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: birthday
+                  type: timestamptz
+                  constraints:
+                    nullable: true
+              - column:
+                  name: address
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: avatar_url
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: refresh_token
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamptz
+              - column:
+                  name: updated_at
+                  type: timestamptz
