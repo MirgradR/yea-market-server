@@ -37,12 +37,21 @@ export class AuthController {
   @Public()
   @RegisterUserApiDocs()
   @Post('register')
-  async register(@Body() registrationData: RegistrationUserDto): Promise<{
+  async register(
+    @Body() registrationData: RegistrationUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{
     access_token: string;
     refresh_token: string;
     user: UserEntityPublic;
   }> {
-    return this.authService.register(registrationData);
+    const data = await this.authService.register(registrationData);
+    res.cookie('refreshToken', data.refresh_token, {
+      httpOnly: true,
+      secure: false,
+      path: '/auth/refresh',
+    });
+    return data;
   }
 
   @LoginApiDocs()

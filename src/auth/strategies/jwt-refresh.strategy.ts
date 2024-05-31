@@ -15,7 +15,11 @@ export class JwtRefreshStrategy extends PassportStrategy(
 ) {
   constructor(private getUserByIdlQuery: GetUserByIdQuery) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (request: Request) => {
+          return request?.cookies?.refreshToken;
+        },
+      ]),
       secretOrKey: JWT_KEYS.REFRESH_SECRET,
       passReqToCallback: true,
     });
@@ -27,7 +31,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
   ): Promise<
     TokenPayloadExtendedDto & { refreshToken: UserEntity['refreshToken'] }
   > {
-    const refreshToken = req.get('Authorization').replace('Bearer', '').trim();
+    const refreshToken = req.cookies['refreshToken'];
     if (!refreshToken) {
       throw new ForbiddenException('Access Denied');
     }
@@ -38,6 +42,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
     }
 
     const isTokenMatch = await verifyHash(user.refreshToken, refreshToken);
+
     if (!isTokenMatch) {
       throw new ForbiddenException('Access Denied');
     }
