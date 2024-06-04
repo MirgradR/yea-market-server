@@ -15,7 +15,13 @@ export function LoginApiDocs() {
       schema: {
         example: {
           access_token: 'access_token112233333',
-          refresh_token: 'access_token112233333',
+          user: {
+            firstName: 'John',
+            lastName: 'Doe',
+            password: '12345',
+            phone: '+1234567890',
+            email: 'john.doe@example.com',
+          },
         },
       },
     }),
@@ -67,7 +73,13 @@ export function RefreshApiDocs() {
       schema: {
         example: {
           access_token: 'access_token112233333',
-          refresh_token: 'access_token112233333',
+          user: {
+            firstName: 'John',
+            lastName: 'Doe',
+            password: '12345',
+            phone: '+1234567890',
+            email: 'john.doe@example.com',
+          },
         },
       },
     }),
