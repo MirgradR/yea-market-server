@@ -22,6 +22,8 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { UserEntity } from 'src/user/user.entity';
 import { Response } from 'express';
+import { ApiTags } from '@nestjs/swagger';
+import { setRefreshTokenToCoockie } from './utils/setRefreshTokenToCoockie';
 
 export type TokenPayloadDto = {
   sub: string;
@@ -30,6 +32,7 @@ export type TokenPayloadDto = {
 
 export type TokenPayloadExtendedDto = TokenPayloadDto & JwtPayload;
 
+@ApiTags('authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -42,16 +45,14 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{
     access_token: string;
-    refresh_token: string;
     user: UserEntityPublic;
   }> {
     const data = await this.authService.register(registrationData);
-    res.cookie('refreshToken', data.refresh_token, {
-      httpOnly: true,
-      secure: false,
-      path: '/auth/refresh',
-    });
-    return data;
+    setRefreshTokenToCoockie(res, data.refresh_token);
+    return {
+      user: data.user,
+      access_token: data.access_token,
+    };
   }
 
   @LoginApiDocs()
@@ -63,7 +64,6 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{
     access_token: string;
-    refresh_token: string;
     user: UserEntity;
   }> {
     const tokenPayload: {
@@ -74,12 +74,11 @@ export class AuthController {
       sub: req.user.id,
     };
     const tokens = await this.authService.signTokens(tokenPayload);
-    res.cookie('refreshToken', tokens.refresh_token, {
-      httpOnly: true,
-      secure: false,
-      path: '/auth/refresh',
-    });
-    return tokens;
+    setRefreshTokenToCoockie(res, tokens.refresh_token);
+    return {
+      user: tokens.user,
+      access_token: tokens.access_token,
+    };
   }
 
   @Public()
@@ -91,7 +90,6 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{
     access_token: string;
-    refresh_token: string;
     user: UserEntity;
   }> {
     const payload: TokenPayloadDto = {
@@ -101,13 +99,12 @@ export class AuthController {
 
     const tokens = await this.authService.signTokens(payload);
 
-    res.cookie('refreshToken', tokens.refresh_token, {
-      httpOnly: true,
-      secure: false,
-      path: '/auth/refresh',
-    });
+    setRefreshTokenToCoockie(res, tokens.refresh_token);
 
-    return tokens;
+    return {
+      user: tokens.user,
+      access_token: tokens.access_token,
+    };
   }
 
   @Patch('logout')

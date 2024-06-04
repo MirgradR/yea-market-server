@@ -28,14 +28,6 @@ export class UpdateRefreshTokenCommand {
 
     const updatedUser = await this.usersRepository.findOne({
       where: { id: userId },
-      relations: [
-        'clientRole',
-        'clientRole.clientCompanies',
-        'clientRole.clientCompanies.company',
-        'adminRoles',
-        'adminRoles.company',
-        'company',
-      ],
     });
 
     if (!updatedUser) {
