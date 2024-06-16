@@ -34,10 +34,8 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# DB postgres
-salute_db
-pgadmin
-
-.env.production
-.env.development
-.env
+*.env
+.production.env
+.development.env
+compose.yaml
+Dockerfile

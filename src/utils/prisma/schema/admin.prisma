@@ -1,0 +1,21 @@
+
+model Admins {
+    id String @id() @unique() @default(uuid())
+    firstName String  @map("first_name")
+    lastName  String @map("last_name")
+    email String @unique
+    phoneNumber String @unique @map("phone_number")
+    role AdminRole
+    password String
+      createdAt    DateTime?   @default(now()) @map("created_at")
+    updatedAt    DateTime?   @updatedAt @map("updated_at")
+    media Media?
+    token Tokens?
+    @@map("admins")
+}
+
+
+enum AdminRole {
+    ADMINISTRATOR
+    EDITOR
+}
