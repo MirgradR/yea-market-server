@@ -1,0 +1,34 @@
+
+model Products {
+      id String @id() @unique() @default(uuid())
+    title String @unique
+    stockStatus Boolean
+    oldPrice Float
+    price Float
+    quantity Int
+    detailsDesc String
+    dimensions String
+    tags String[]
+    createdAt    DateTime?   @default(now()) @map("created_at")
+    updatedAt    DateTime?   @updatedAt @map("updated_at")
+    productCategory ProductCategory[]
+    colors Colors[]
+    medias Media[]
+}
+
+
+model Colors {
+    id String @id() @unique() @default(uuid())
+    title String
+    hexCode String?
+    productId String @map("product_id")
+    product Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductCategory {
+      id String @id() @unique() @default(uuid())
+      productId String
+      categoryId String
+      category Categories @relation(fields: [categoryId], references: [id])
+      product Products @relation(fields: [productId], references: [id])
+}

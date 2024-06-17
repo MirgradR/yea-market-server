@@ -1,0 +1,16 @@
+model Logs {
+    id         Int       @id() @default(autoincrement())
+    host       String?
+    url        String?
+    statusCode Int?      @map("status_code")
+    method     String?
+    user       String?
+    context    String?
+    message    String?
+    level      String?
+    time       String?
+    createdAt  DateTime? @default(now()) @map("created_at")
+    updatedAt  DateTime? @updatedAt @map("updated_at")
+
+    @@map("logs")
+}

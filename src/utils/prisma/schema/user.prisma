@@ -1,0 +1,17 @@
+model Users {
+    id                          String      @id() @default(uuid())
+    email                       String      @unique @map("email")
+    firstName                   String      @map("first_name")
+    phoneNumber                 String      @unique @map("phone_number")
+    password                    String
+    company                     String 
+    countryRegion               String      @map("country_region")
+    streetAddress               String      @map("street_address")
+    createdAt                   DateTime?   @default(now()) @map("created_at")
+    updatedAt                   DateTime?   @updatedAt @map("updated_at")
+    deleted                     Boolean?    @default(false)
+    token                       Tokens?
+
+
+    @@map("users")
+}
