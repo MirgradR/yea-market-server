@@ -1,15 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'src/utils/prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AdminsEntity } from '../users/entities/admin.entity';
 
 @Injectable()
 export class UserCommonService {
   private readonly logger = new Logger(UserCommonService.name);
 
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    @InjectRepository(AdminsEntity)
+    private adminsRepository: Repository<AdminsEntity>,
+  ) {}
 
   async findUserByEmail(email: string) {
     this.logger.log(`Поиск пользователя по адресу электронной почты: ${email}`);
-    const user = await this.prismaService.admins.findUnique({
+    const user = await this.adminsRepository.findOne({
       where: { email },
     });
     if (!user) {
@@ -22,7 +27,7 @@ export class UserCommonService {
 
   async findUserByPhoneNumber(phoneNumber: string) {
     this.logger.log(`Поиск пользователя по номеру телефона: ${phoneNumber}`);
-    const user = await this.prismaService.admins.findUnique({
+    const user = await this.adminsRepository.findOne({
       where: { phoneNumber },
     });
     if (!user) {
@@ -35,7 +40,7 @@ export class UserCommonService {
 
   async findUserById(userId: string) {
     this.logger.log(`Поиск пользователя по ID: ${userId}`);
-    const user = await this.prismaService.admins.findUnique({
+    const user = await this.adminsRepository.findOne({
       where: { id: userId },
     });
     if (!user) {

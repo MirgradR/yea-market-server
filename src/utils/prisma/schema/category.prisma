@@ -1,9 +1,0 @@
-
-
-model Categories {
-    id String @id @unique @default(uuid())
-    title String
-      createdAt    DateTime?   @default(now()) @map("created_at")
-    updatedAt    DateTime?   @updatedAt @map("updated_at")
-  productCategpry ProductCategory[]
-}

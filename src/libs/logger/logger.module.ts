@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { LoggerService } from './logger.service';
 import CustomLogger from './helpers/customLogger';
-import { RedisModule } from '../redis/redis.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { LogsEntity } from './entity/logs.entity';
 
 @Module({
-  imports: [RedisModule],
+  imports: [TypeOrmModule.forFeature([LogsEntity])],
   providers: [LoggerService, CustomLogger],
   exports: [CustomLogger],
 })

@@ -1,30 +1,30 @@
-import { AdminRole } from '@prisma/client';
 import {
-  ConflictException,
   Injectable,
   Logger,
+  ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/utils/prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/createUser.dto';
-import { UserTokenDto } from '../token/dto/token.dto';
-import { generateHash } from 'src/helpers/providers/generateHash';
 import { UpdateUserDto } from './dto/updateUser.dto';
-import { UserCommonService } from '../userCommon/userCommon.service';
-import { GetUsersQuery } from './dto/getUsers.query';
 import { ITransformedFile } from 'src/helpers/interfaces/fileTransform.interface';
 import { MediaService } from 'src/libs/media/media.service';
-import { GetUsersResponse } from './responses/getUsers.response';
-import { AdminUsersResponse } from 'src/helpers/types/admin/user.type';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
+import { AdminsEntity } from './entities/admin.entity';
+import { generateHash } from 'src/helpers/providers/generateHash';
+import { GetUsersQuery } from './dto/getUsers.query';
+import { AdminRole } from 'src/helpers/constants/adminRole.enum';
+import { UpdateUserResponse } from './responses/updateUser.response';
+import { AdminTokenDto } from '../token/dto/token.dto';
 
 @Injectable()
 export class AdminUsersService {
   private logger = new Logger(AdminUsersService.name);
 
   constructor(
-    private prismaService: PrismaService,
-    private userCommonService: UserCommonService,
+    @InjectRepository(AdminsEntity)
+    private adminsRepository: Repository<AdminsEntity>,
     private mediaService: MediaService,
   ) {}
 
@@ -38,7 +38,7 @@ export class AdminUsersService {
       role: AdminRole.ADMINISTRATOR,
     };
 
-    const user = await this.prismaService.admins.findUnique({
+    const user = await this.adminsRepository.findOne({
       where: { email: dto.email },
     });
 
@@ -50,10 +50,10 @@ export class AdminUsersService {
     }
   }
 
-  async createUser(dto: CreateUserDto): Promise<AdminUsersResponse> {
+  async createUser(dto: CreateUserDto): Promise<AdminsEntity> {
     this.logger.log(`Попытка создания пользователя с email ${dto.email}`);
 
-    const candidate = await this.prismaService.admins.findUnique({
+    const candidate = await this.adminsRepository.findOne({
       where: { email: dto.email },
     });
 
@@ -64,25 +64,27 @@ export class AdminUsersService {
       );
     }
 
-    const user = await this.prismaService.admins.create({
-      data: {
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        password: (await generateHash(dto.password)) || undefined,
-        email: dto.email,
-        phoneNumber: dto.phoneNumber,
-        role: dto.role,
-      },
+    const hashedPassword = await generateHash(dto.password);
+
+    const newUser = this.adminsRepository.create({
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      password: hashedPassword,
+      email: dto.email,
+      phoneNumber: dto.phoneNumber,
+      role: dto.role,
     });
+
+    const user = await this.adminsRepository.save(newUser);
 
     this.logger.log(`Пользователь ${user.email} успешно создан`);
     return user;
   }
 
-  async getMe(currentUser: UserTokenDto): Promise<AdminUsersResponse> {
+  async getMe(currentUser: AdminTokenDto): Promise<AdminsEntity> {
     this.logger.log(`Запрос данных пользователя с id ${currentUser.id}`);
 
-    const user = await this.prismaService.admins.findUnique({
+    const user = await this.adminsRepository.findOne({
       where: { id: currentUser.id },
     });
 
@@ -95,64 +97,63 @@ export class AdminUsersService {
     return user;
   }
 
-  async getUsers(query?: GetUsersQuery): Promise<GetUsersResponse> {
+  async getUsers(
+    query?: GetUsersQuery,
+  ): Promise<{ users: AdminsEntity[]; totalCount: number }> {
+    const { take = 10, page = 1 } = query;
     this.logger.log('Запрос списка пользователей');
 
-    const { page = 1, take = 10 } = query;
-
-    const users = await this.prismaService.admins.findMany({
+    const [users, totalCount] = await this.adminsRepository.findAndCount({
       take: take,
       skip: (page - 1) * take,
     });
-
-    const totalCount = await this.prismaService.admins.count();
 
     this.logger.log('Список пользователей успешно получен');
     return { users, totalCount };
   }
 
   async uploadImage(
-    currentUser: UserTokenDto,
+    currentUser: AdminTokenDto,
     image: ITransformedFile,
   ): Promise<SuccessMessageType> {
     this.logger.log(
       `Попытка загрузки изображения для пользователя с id ${currentUser.id}`,
     );
 
-    const user = await this.userCommonService.findUserById(currentUser.id);
-
-    const media = await this.prismaService.media.findUnique({
-      where: { adminId: currentUser.id },
+    const user = await this.adminsRepository.findOne({
+      where: { id: currentUser.id },
     });
 
-    if (media) {
-      await this.mediaService.deleteOneMedia(media.id);
+    if (!user) {
+      this.logger.error(`Пользователь с id ${currentUser.id} не найден`);
+      throw new NotFoundException('Пользователь не найден!');
+    }
+
+    if (user.media) {
+      await this.mediaService.deleteOneMedia(user.media.id);
       this.logger.log(
         `Старое изображение удалено для пользователя с id ${currentUser.id}`,
       );
-      await this.mediaService.createFileMedia(image, user.id, 'adminId');
-      this.logger.log(
-        `Новое изображение загружено для пользователя с id ${currentUser.id}`,
-      );
-      return { message: 'Изображение успешно загружено' };
     }
 
     await this.mediaService.createFileMedia(image, user.id, 'adminId');
     this.logger.log(
-      `Изображение загружено для пользователя с id ${currentUser.id}`,
+      `Новое изображение загружено для пользователя с id ${currentUser.id}`,
     );
+
     return { message: 'Изображение успешно загружено' };
   }
 
-  async deleteImage(currentUser: UserTokenDto): Promise<SuccessMessageType> {
+  async deleteImage(currentUser: AdminTokenDto): Promise<SuccessMessageType> {
     this.logger.log(
       `Попытка удаления изображения для пользователя с id ${currentUser.id}`,
     );
 
-    const user = await this.prismaService.admins.findUnique({
+    const user = await this.adminsRepository.findOne({
       where: { id: currentUser.id },
-      include: { media: true },
+      relations: { media: true },
     });
+    console.log('🚀 ~ AdminUsersService ~ deleteImage ~ user:', user);
 
     if (!user || !user.media) {
       this.logger.error(
@@ -171,32 +172,39 @@ export class AdminUsersService {
     return { message: 'Изображение успешно удалено' };
   }
 
-  async updateUser(currentUser: UserTokenDto, dto: UpdateUserDto) {
+  async updateUser(
+    currentUser: AdminTokenDto,
+    dto: UpdateUserDto,
+  ): Promise<UpdateUserResponse> {
     this.logger.log(
       `Попытка обновления данных пользователя с id ${currentUser.id}`,
     );
 
-    const user = await this.userCommonService.findUserById(currentUser.id);
+    const user = await this.adminsRepository.findOne({
+      where: { id: currentUser.id },
+    });
+
+    if (!user) {
+      this.logger.error(`Пользователь с id ${currentUser.id} не найден`);
+      throw new NotFoundException('Пользователь не найден!');
+    }
 
     if (dto.password) {
       dto.password = await generateHash(dto.password);
       this.logger.log('Пароль пользователя обновлен');
     }
 
-    await this.prismaService.admins.update({
-      where: { id: user.id },
-      data: { ...dto },
-    });
-
+    await this.adminsRepository.update(currentUser.id, { ...dto });
     this.logger.log(
       `Данные пользователя с id ${currentUser.id} успешно обновлены`,
     );
-    return { message: 'Данные пользователя успешно обновлены' };
+
+    return { user, message: 'Данные пользователя успешно обновлены' };
   }
 
   async deleteUser(
     userId: string,
-    currentUser: UserTokenDto,
+    currentUser: AdminTokenDto,
   ): Promise<SuccessMessageType> {
     this.logger.log(`Попытка удаления пользователя с id ${userId}`);
 
@@ -205,9 +213,16 @@ export class AdminUsersService {
       throw new ConflictException('Пользователь не может удалить сам себя');
     }
 
-    const user = await this.userCommonService.findUserById(userId);
+    const user = await this.adminsRepository.findOne({
+      where: { id: userId },
+    });
 
-    await this.prismaService.admins.delete({ where: { id: user.id } });
+    if (!user) {
+      this.logger.error(`Пользователь с id ${userId} не найден`);
+      throw new NotFoundException('Пользователь не найден!');
+    }
+
+    await this.adminsRepository.delete(userId);
     this.logger.log(`Пользователь с id ${userId} успешно удален`);
 
     return { message: 'Пользователь успешно удален' };

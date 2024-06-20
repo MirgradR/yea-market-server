@@ -1,0 +1,85 @@
+changeSet:
+  id: 6-create-table-medias
+  author: Your Name
+  changes:
+    - createTable:
+        tableName: medias
+        columns:
+          - column:
+              name: id
+              type: uuid
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: file_name
+              type: varchar(255)
+              constraints:
+                nullable: false
+          - column:
+              name: file_path
+              type: varchar(255)
+              constraints:
+                nullable: false
+          - column:
+              name: size
+              type: varchar(255)
+              constraints:
+                nullable: false
+          - column:
+              name: mime_type
+              type: varchar(255)
+              constraints:
+                nullable: false
+          - column:
+              name: original_name
+              type: varchar(255)
+              constraints:
+                nullable: false
+          - column:
+              name: admin_id
+              type: uuid
+              constraints:
+                nullable: true
+          - column:
+              name: product_id
+              type: uuid
+              constraints:
+                nullable: true
+          - column:
+              name: file_type
+              type: varchar(255)
+              constraints:
+                nullable: false
+          - column:
+              name: created_at
+              type: timestamptz
+              constraints:
+                nullable: false
+          - column:
+              name: updated_at
+              type: timestamptz
+              constraints:
+                nullable: false
+          - addForeignKeyConstraint:
+              baseTableName: medias
+              constraintName: fk_medias_admin_id
+              referencedTableName: admins
+              referencedColumnNames:
+                - id
+              columns:
+                - column:
+                    name: admin_id
+                    type: uuid
+              onDelete: CASCADE
+          - addForeignKeyConstraint:
+              baseTableName: medias
+              constraintName: fk_medias_product_id
+              referencedTableName: products
+              referencedColumnNames:
+                - id
+              columns:
+                - column:
+                    name: product_id
+                    type: uuid
+              onDelete: CASCADE

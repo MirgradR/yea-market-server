@@ -6,7 +6,6 @@ import {
   DiskHealthIndicator,
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
-import { PrismaHealthIndicator } from '../prisma/prisma.health';
 
 @Controller('health')
 export class HealthController {
@@ -15,7 +14,6 @@ export class HealthController {
     private http: HttpHealthIndicator,
     private disk: DiskHealthIndicator,
     private memory: MemoryHealthIndicator,
-    private prisma: PrismaHealthIndicator,
   ) {}
 
   @Get()
@@ -32,8 +30,6 @@ export class HealthController {
       async () => this.memory.checkRSS('memory_rss', 150 * 1024 * 1024),
 
       async () => this.http.pingCheck('internet', 'https://www.google.com'),
-
-      async () => this.prisma.isHealthy('prisma'),
     ]);
   }
 }

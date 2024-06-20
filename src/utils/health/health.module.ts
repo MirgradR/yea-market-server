@@ -3,7 +3,7 @@ import { TerminusModule } from '@nestjs/terminus';
 import { HealthController } from './health.controller';
 import { HttpModule } from '@nestjs/axios';
 import { TerminusLogger } from './terminus.logger';
-import { RedisModule } from '../../libs/redis/redis.module';
+// import { RedisModule } from '../../libs/redis/redis.module';
 import { HealthService } from './health.service';
 
 @Module({
@@ -14,7 +14,7 @@ import { HealthService } from './health.service';
       gracefulShutdownTimeoutMs: 1000,
     }),
     HttpModule,
-    RedisModule,
+    // RedisModule,
   ],
   controllers: [HealthController],
   providers: [HealthService],

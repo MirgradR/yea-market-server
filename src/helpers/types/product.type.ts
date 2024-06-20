@@ -1,7 +1,10 @@
-import { Products } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
+import { ProductsEntity } from 'src/components/product/entities/product.entity';
+import { ColorType } from './color.type';
+import { Type } from 'class-transformer';
+import { MediaType } from './mediaType';
 
-export class ProductType implements Products {
+export class ProductType extends ProductsEntity {
   @ApiProperty({
     description: 'The unique identifier of the product',
     example: 'd290f1ee-6c54-4b01-90e6-d701748f0851',
@@ -67,4 +70,12 @@ export class ProductType implements Products {
     example: '2023-06-16T07:00:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiProperty({ type: [ColorType] })
+  @Type(() => ColorType)
+  colors: ColorType[];
+
+  @ApiProperty({ type: [MediaType] })
+  @Type(() => MediaType)
+  medias: MediaType[];
 }

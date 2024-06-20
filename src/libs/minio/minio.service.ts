@@ -14,8 +14,8 @@ export class MinioService implements OnModuleInit {
       endPoint: this.configService.getOrThrow('MINIO_ENDPOINT'),
       port: +this.configService.getOrThrow('MINIO_PORT'),
       useSSL: false,
-      accessKey: this.configService.getOrThrow('MINIO_ACCESS_KEY'),
-      secretKey: this.configService.getOrThrow('MINIO_SECRET_KEY'),
+      accessKey: this.configService.getOrThrow('MINIO_ROOT_USER'),
+      secretKey: this.configService.getOrThrow('MINIO_ROOT_PASSWORD'),
     });
 
     this.bucketName = this.configService.getOrThrow('MINIO_BUCKET_NAME');

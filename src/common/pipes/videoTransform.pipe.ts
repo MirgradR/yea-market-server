@@ -8,7 +8,7 @@ import { MinioService } from '../../libs/minio/minio.service';
 import { createReadStream } from 'fs';
 import { unlink } from 'fs/promises';
 import { ITransformedFile } from '../../helpers/interfaces/fileTransform.interface';
-import { FileType } from '@prisma/client';
+import { FileTypeEnum } from 'src/helpers/constants/fileType.enum';
 
 @Injectable()
 export class VideoTransformer implements PipeTransform<Express.Multer.File> {
@@ -34,7 +34,7 @@ export class VideoTransformer implements PipeTransform<Express.Multer.File> {
         filePath: await this.minioService.getFileUrl(file.filename),
         mimeType: file.mimetype,
         size: file.size.toString(),
-        fileType: FileType.IMAGE,
+        fileType: FileTypeEnum.IMAGE,
       };
       await unlink(file.path);
       return transformedFile;

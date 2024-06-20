@@ -1,7 +1,8 @@
-import { applyDecorators } from '@nestjs/common';
+import { applyDecorators, UseInterceptors } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { UpdateUserDto } from '../dto/updateUser.dto';
-import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
+import { UpdateUserResponse } from '../responses/updateUser.response';
+import { TransformDataInterceptor } from 'src/common/interceptors/transformData.interceptor';
 
 export function UpdateUserOperation() {
   return applyDecorators(
@@ -11,8 +12,9 @@ export function UpdateUserOperation() {
     ApiResponse({
       status: 200,
       description: 'Admin user updated successfully',
-      type: SuccessMessageType,
+      type: UpdateUserResponse,
     }),
+    UseInterceptors(new TransformDataInterceptor(UpdateUserResponse)),
     ApiResponse({ status: 404, description: 'Admin user not found' }),
   );
 }

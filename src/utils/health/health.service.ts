@@ -5,7 +5,6 @@ import {
   HttpHealthIndicator,
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
-import { PrismaHealthIndicator } from '../prisma/prisma.health';
 
 @Injectable()
 export class HealthService implements OnModuleInit {
@@ -14,7 +13,6 @@ export class HealthService implements OnModuleInit {
     private readonly disk: DiskHealthIndicator,
     private readonly memory: MemoryHealthIndicator,
     private readonly http: HttpHealthIndicator,
-    private readonly prisma: PrismaHealthIndicator,
   ) {}
 
   async onModuleInit() {

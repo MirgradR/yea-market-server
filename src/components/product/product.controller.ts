@@ -8,16 +8,11 @@ import {
   Patch,
   Post,
   UploadedFile,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/createProduct.dto';
 import { UpdateProductDto } from './dto/updateProduct.dto';
-import { ColorDto } from 'src/helpers/dto/color.dto';
 import { ITransformedFile } from 'src/helpers/interfaces/fileTransform.interface';
-import { FileFastifyInterceptor, diskStorage } from 'fastify-file-interceptor';
-import { imageFilter } from 'src/common/filters/imageFilter';
-import { randomUUID } from 'crypto';
 import { ImageTransformer } from 'src/common/pipes/imageTransform.pipe';
 import { CreateProductResponse } from './responses/createProduct.response';
 import { CreateProductOperation } from './decorators/createProductOperation.decorator';
@@ -30,6 +25,14 @@ import { UpdateProductResponse } from './responses/updateProduct.response';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
 import { CreateProductColorResponse } from './responses/createProductColor.response';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CreateColorDto } from './dto/createColor.dto';
+import { DeleteProductOperation } from './decorators/deleteProductOperation.decorator';
+import { CreateProductColorOperation } from './decorators/createProductColorOperation.decorator';
+import { DeleteProductColorOperation } from './decorators/deleteProductColorOperation.decorator';
+import { CreateProductCategoryOperation } from './decorators/createProductCategoryOperation.decorator';
+import { DeleteProductCategoryOperation } from './decorators/deleteProductCategory.decorator';
+import { UploadProductImageOperation } from './decorators/uploadProductImageOperation.decorator';
+import { DeleteProductImageOperation } from './decorators/deleteProductImageOperation.decorator';
 
 @ApiTags('products')
 @ApiBearerAuth()
@@ -69,6 +72,7 @@ export class ProductController {
   }
 
   @Delete(':productId')
+  @DeleteProductOperation()
   async deleteProduct(
     @Param('productId', ParseUUIDPipe) productId: string,
   ): Promise<SuccessMessageType> {
@@ -76,14 +80,16 @@ export class ProductController {
   }
 
   @Post(':productId/colors')
+  @CreateProductColorOperation()
   async createProductColor(
     @Param('productId', ParseUUIDPipe) productId: string,
-    @Body() colorDto: ColorDto,
+    @Body() colorDto: CreateColorDto,
   ): Promise<CreateProductColorResponse> {
     return await this.productService.createProductColor(productId, colorDto);
   }
 
   @Delete(':productId/colors/:colorId')
+  @DeleteProductColorOperation()
   async deleteProductColor(
     @Param('productId', ParseUUIDPipe) productId: string,
     @Param('colorId', ParseUUIDPipe) colorId: string,
@@ -92,6 +98,7 @@ export class ProductController {
   }
 
   @Post(':productId/categories/:categoryId')
+  @CreateProductCategoryOperation()
   async createProductCategory(
     @Param('productId', ParseUUIDPipe) productId: string,
     @Param('categoryId', ParseUUIDPipe) categoryId: string,
@@ -103,6 +110,7 @@ export class ProductController {
   }
 
   @Delete(':productId/categories/:categoryId')
+  @DeleteProductCategoryOperation()
   async deleteProductCategory(
     @Param('productId', ParseUUIDPipe) productId: string,
     @Param('categoryId', ParseUUIDPipe) categoryId: string,
@@ -114,20 +122,7 @@ export class ProductController {
   }
 
   @Post(':productId/images')
-  @UseInterceptors(
-    FileFastifyInterceptor('image', {
-      storage: diskStorage({
-        destination: './temp',
-        filename: (req, file, cb) => {
-          const fileExtension = file.mimetype.split('/')[1];
-          const uniqueFileName = `${randomUUID()}.${fileExtension}`;
-          cb(null, uniqueFileName);
-        },
-      }),
-      limits: { fileSize: 1024 * 1024 * 1500 },
-      fileFilter: imageFilter,
-    }),
-  )
+  @UploadProductImageOperation()
   async uploadImage(
     @UploadedFile(ImageTransformer) image: ITransformedFile,
     @Param('productId', ParseUUIDPipe) productId: string,
@@ -136,6 +131,7 @@ export class ProductController {
   }
 
   @Delete(':productId/images/:imageId')
+  @DeleteProductImageOperation()
   async deleteImage(
     @Param('productId', ParseUUIDPipe) productId: string,
     @Param('imageId', ParseUUIDPipe) imageId: string,

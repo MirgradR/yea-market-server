@@ -1,5 +1,4 @@
 databaseChangeLog:
-  - include:
-      file: entities/user.changelog.yaml
+  - includeAll:
+      path: entities
       relativeToChangelogFile: true
-

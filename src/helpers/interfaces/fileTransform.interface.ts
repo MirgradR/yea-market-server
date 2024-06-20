@@ -1,4 +1,4 @@
-import { FileType } from '@prisma/client';
+import { FileTypeEnum } from '../constants/fileType.enum';
 
 export interface ITransformedFile {
   fileName: string;
@@ -6,5 +6,5 @@ export interface ITransformedFile {
   mimeType: string;
   size: string;
   originalName: string;
-  fileType: FileType;
+  fileType: FileTypeEnum;
 }

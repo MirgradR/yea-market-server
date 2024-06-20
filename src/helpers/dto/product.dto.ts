@@ -8,7 +8,6 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -24,7 +23,6 @@ export class ProductDto extends OmitType(ProductType, [
 
   @ApiProperty({ description: 'Product colors', type: [ColorDto] })
   @IsArray()
-  @ValidateNested({ each: true })
   @Type(() => ColorDto)
   colors: ColorDto[];
 

@@ -1,49 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { CreateLogDto, FindLogsFilter } from './dto/logs.dto';
-import { PrismaService } from 'src/utils/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
-
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { LogsEntity } from './entity/logs.entity';
+import { OrderType } from 'src/helpers/constants';
 @Injectable()
 export class LoggerService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    @InjectRepository(LogsEntity)
+    private logRepository: Repository<LogsEntity>,
+  ) {}
 
   async createLog(log: CreateLogDto) {
-    const newLog = this.prismaService.logs.create({
-      data: {
-        context: log.context,
-        host: log.host,
-        message: log.message,
-        level: log.level,
-        method: log.method,
-        // statusCode: log.statusCode,
-        time: log.time,
-        url: log.url,
-        user: log.user,
-      },
-    });
+    const newLog = this.logRepository.create(log);
+    await this.logRepository.save(newLog);
     return newLog;
   }
 
   async getLogs(query: FindLogsFilter) {
     const { order, level, method, orderBy, page = 1, take = 10 } = query;
-    const where: Prisma.LogsWhereInput = {};
+    const where: any = {};
 
-    if (query.level) {
-      where.level = query.level;
+    if (level) {
+      where.level = level;
     }
-    if (query.method) {
-      where.method = query.method;
+    if (method) {
+      where.method = method;
     }
 
-    const [logs, count] = await this.prismaService.logs.findMany({
+    const [logs, count] = await this.logRepository.findAndCount({
       where,
-      orderBy: {
-        [orderBy]: order,
+      order: {
+        [orderBy]: order === OrderType.asc ? OrderType.asc : OrderType.desc,
       },
       take: take,
       skip: (page - 1) * take,
     });
 
-    return { logs, count: count };
+    return { logs, count };
   }
 }

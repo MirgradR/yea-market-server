@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Categories } from '@prisma/client';
-import { Exclude } from 'class-transformer';
 
-export class CategoryType implements Categories {
+import { Exclude } from 'class-transformer';
+import { CategoryEntity } from 'src/components/category/entities/category.entity';
+
+export class CategoryType extends CategoryEntity {
   @ApiProperty({
     description: 'Unique identifier of the category',
     example: '123e4567-e89b-12d3-a456-426614174000',

@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { MinioService } from '../../libs/minio/minio.service';
 import { ITransformedFile } from '../../helpers/interfaces/fileTransform.interface';
-import { PrismaService } from 'src/utils/prisma/prisma.service';
+import { In, Repository } from 'typeorm';
+
+import { InjectRepository } from '@nestjs/typeorm';
+import { MediaEntity } from './entities/media.entity';
 
 @Injectable()
 export class MediaService {
@@ -9,7 +12,8 @@ export class MediaService {
 
   constructor(
     private minioService: MinioService,
-    private readonly prisma: PrismaService,
+    @InjectRepository(MediaEntity)
+    private mediaRepository: Repository<MediaEntity>,
   ) {}
 
   async createFilesMedia(
@@ -30,9 +34,16 @@ export class MediaService {
       };
       mediaData[entityColumn] = entityId;
 
-      const media = await this.prisma.media.create({
-        data: mediaData,
+      const media = this.mediaRepository.create({
+        originalName: mediaData.originalName,
+        fileName: mediaData.fileName,
+        filePath: mediaData.filePath,
+        mimeType: mediaData.mimeType,
+        size: mediaData.size,
+        fileType: mediaData.fileType,
+        [entityColumn]: entityId,
       });
+      await this.mediaRepository.save(media);
 
       mediaIds.push(media.id);
     }
@@ -51,58 +62,68 @@ export class MediaService {
       filePath: file.filePath,
       mimeType: file.mimeType,
       size: file.size,
-
       fileType: file.fileType,
     };
     mediaData[entityColumn] = entityId;
 
-    const media = await this.prisma.media.create({
-      data: mediaData,
+    const media = this.mediaRepository.create({
+      originalName: mediaData.originalName,
+      fileName: mediaData.fileName,
+      filePath: mediaData.filePath,
+      mimeType: mediaData.mimeType,
+      size: mediaData.size,
+      fileType: mediaData.fileType,
+      [entityColumn]: entityId,
     });
+    await this.mediaRepository.save(media);
 
     return media.id;
   }
 
   async deleteMedias(fileIds: string[]) {
-    this.logger.log(`Удаление медиа с идентификаторами: ${fileIds.join(', ')}`);
-    const files = await this.prisma.media.findMany({
-      where: { id: { in: fileIds } },
+    this.logger.log(`Deleting media with IDs: ${fileIds.join(', ')}`);
+
+    const mediaToDelete = await this.mediaRepository.find({
+      where: { id: In(fileIds) },
     });
-    if (!files.length) {
-      this.logger.warn('Некоторые файлы не найдены!');
-      throw new NotFoundException('Some files are not found!');
+    if (mediaToDelete.length !== fileIds.length) {
+      const foundIds = mediaToDelete.map((media) => media.id);
+      const notFoundIds = fileIds.filter((id) => !foundIds.includes(id));
+      this.logger.warn(`Some media files not found: ${notFoundIds.join(', ')}`);
+      throw new NotFoundException('Some media files not found');
     }
-    const fileNames = files.map((file) => file.fileName);
+
+    const fileNames = mediaToDelete.map((media) => media.fileName);
     await this.minioService.deleteFiles(fileNames);
-    await this.prisma.media.deleteMany({
-      where: { id: { in: fileIds } },
-    });
+    await this.mediaRepository.delete(mediaToDelete.map((media) => media.id));
   }
 
   async deleteOneMedia(mediaId: string) {
-    this.logger.log(`Удаление медиа с идентификатором: ${mediaId}`);
-    const file = await this.prisma.media.findUnique({
+    this.logger.log(`Deleting media with ID: ${mediaId}`);
+
+    const mediaToDelete = await this.mediaRepository.findOne({
       where: { id: mediaId },
     });
-    if (!file) {
-      this.logger.warn(`Медиа с идентификатором ${mediaId} не найдено!`);
-      throw new NotFoundException('Media not found!');
+    if (!mediaToDelete) {
+      this.logger.warn(`Media with ID ${mediaId} not found`);
+      throw new NotFoundException('Media not found');
     }
-    await this.minioService.deleteFile(file.fileName);
-    await this.prisma.media.delete({
-      where: { id: mediaId },
-    });
+
+    await this.minioService.deleteFile(mediaToDelete.fileName);
+    await this.mediaRepository.delete(mediaId);
   }
 
   async getOneMedia(mediaId: string) {
-    this.logger.log(`Получение медиа с идентификатором: ${mediaId}`);
-    const media = await this.prisma.media.findUnique({
+    this.logger.log(`Fetching media with ID: ${mediaId}`);
+
+    const media = await this.mediaRepository.findOne({
       where: { id: mediaId },
     });
     if (!media) {
-      this.logger.warn(`Медиа с идентификатором ${mediaId} не найдено!`);
-      throw new NotFoundException('Media not found!');
+      this.logger.warn(`Media with ID ${mediaId} not found`);
+      throw new NotFoundException('Media not found');
     }
+
     return media;
   }
 }

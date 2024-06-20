@@ -1,13 +1,14 @@
-import { AdminRole, Admins } from '@prisma/client';
+import { AdminRole } from 'src/helpers/constants/adminRole.enum';
+import { AdminsEntity } from '../../users/entities/admin.entity';
 
-export class UserTokenDto {
+export class AdminTokenDto {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   role: AdminRole;
 
-  constructor(entity: Admins) {
+  constructor(entity: AdminsEntity) {
     this.id = entity.id;
     this.firstName = entity.firstName;
     this.lastName = entity.lastName;

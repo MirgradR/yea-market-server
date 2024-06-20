@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AdminRole, Admins } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 import {
   IsEmail,
@@ -9,8 +8,10 @@ import {
   IsString,
   IsStrongPassword,
 } from 'class-validator';
+import { AdminsEntity } from 'src/components/admin/users/entities/admin.entity';
+import { AdminRole } from 'src/helpers/constants/adminRole.enum';
 
-export class AdminUsersDto implements Admins {
+export class AdminUsersDto extends AdminsEntity {
   @ApiProperty({ example: '1', description: 'Unique identifier for the admin' })
   id: string;
 

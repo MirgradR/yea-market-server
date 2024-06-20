@@ -8,7 +8,7 @@ import { MinioService } from '../../libs/minio/minio.service';
 import { createReadStream } from 'fs';
 import { unlink } from 'fs/promises';
 import { ITransformedFile } from '../../helpers/interfaces/fileTransform.interface';
-import { FileType } from '@prisma/client';
+import { FileTypeEnum } from 'src/helpers/constants/fileType.enum';
 
 @Injectable()
 export class ImageTransformer implements PipeTransform<Express.Multer.File> {
@@ -16,9 +16,11 @@ export class ImageTransformer implements PipeTransform<Express.Multer.File> {
 
   async transform(file: Express.Multer.File): Promise<ITransformedFile> {
     let transformedFile: ITransformedFile;
-    if (!file.path || !file.destination)
+    if (!file.path || !file.destination || !file)
       throw new BadRequestException('Image not provided');
     try {
+      if (!file.path || !file.destination)
+        throw new BadRequestException('Image not provided');
       const uploadStream = createReadStream(file.path);
 
       await this.minioService.uploadFileStream(
@@ -34,7 +36,7 @@ export class ImageTransformer implements PipeTransform<Express.Multer.File> {
         filePath: await this.minioService.getFileUrl(file.filename),
         mimeType: file.mimetype,
         size: file.size.toString(),
-        fileType: FileType.IMAGE,
+        fileType: FileTypeEnum.IMAGE,
       };
       await unlink(file.path);
       return transformedFile;

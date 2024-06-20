@@ -6,8 +6,8 @@ import { AdminUsersResponse } from 'src/helpers/types/admin/user.type';
 export class UserRefreshResponse extends PickType(SuccessResponse, [
   'message',
   'accessToken',
-  'refreshToken' as const,
-]) {
+  'refreshToken',
+] as const) {
   @ApiProperty({ type: AdminUsersResponse })
   @Type(() => AdminUsersResponse)
   user: AdminUsersResponse;

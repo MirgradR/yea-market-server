@@ -1,23 +1,26 @@
 import { applyDecorators, UseInterceptors } from '@nestjs/common';
 import {
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
-  ApiConsumes,
-  ApiBody,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { randomUUID } from 'crypto';
-import { diskStorage, FileFastifyInterceptor } from 'fastify-file-interceptor';
 import { imageFilter } from 'src/common/filters/imageFilter';
-import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
 import { FileDto } from 'src/helpers/dto/file.dto';
+import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
 
 export function UploadImageOperation() {
   return applyDecorators(
     ApiOperation({ summary: 'Upload admin user image' }),
     UseInterceptors(
-      FileFastifyInterceptor('image', {
+      FileInterceptor('image', {
         storage: diskStorage({
-          destination: './temp',
+          destination: (req, file, cb) => {
+            cb(null, './src/temp');
+          },
           filename: (req, file, cb) => {
             const fileExtension = file.mimetype.split('/')[1];
             const uniqueFileName = `${randomUUID()}.${fileExtension}`;

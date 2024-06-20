@@ -8,11 +8,11 @@ import {
 import { verifyHash } from 'src/helpers/providers/generateHash';
 import { UserLoginDto } from './dto/userLogin.dto';
 import { UserCommonService } from '../userCommon/userCommon.service';
-import { AdminTokenService } from '../token/token.service';
-import { UserTokenDto } from '../token/dto/token.dto';
 import { UserLoginResponse } from './responses/userLogin.response';
 import { UserRefreshResponse } from './responses/userRefresh.response';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
+import { AdminTokenService } from '../token/token.service';
+import { AdminTokenDto } from '../token/dto/token.dto';
 
 @Injectable()
 export class AdminAuthService {
@@ -43,7 +43,7 @@ export class AdminAuthService {
     }
 
     const tokens = this.tokenService.generateTokens({
-      ...new UserTokenDto(user),
+      ...new AdminTokenDto(user),
     });
 
     await this.tokenService.saveTokens(user.id, tokens.refreshToken);
@@ -85,7 +85,7 @@ export class AdminAuthService {
     }
 
     const tokens = this.tokenService.generateTokens({
-      ...new UserTokenDto(user),
+      ...new AdminTokenDto(user),
     });
 
     await this.tokenService.saveTokens(user.id, tokens.refreshToken);

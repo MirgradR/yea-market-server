@@ -6,11 +6,10 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { RedisService } from 'src/libs/redis/redis.service';
 
 @Injectable()
 export class ClearCookieInterceptor implements NestInterceptor {
-  constructor(private redisService: RedisService) {}
+  constructor() {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const ctx = context.switchToHttp();
@@ -25,12 +24,12 @@ export class ClearCookieInterceptor implements NestInterceptor {
             headers.authorization &&
             headers.authorization.startsWith('Bearer ')
           ) {
-            const accessToken = headers.authorization.split(' ')[1];
+            // const accessToken = headers.authorization.split(' ')[1];
             try {
-              await this.redisService.setTokenWithExpiry(
-                accessToken,
-                accessToken,
-              );
+              // await this.redisService.setTokenWithExpiry(
+              //   accessToken,
+              //   accessToken,
+              // );
               response.clearCookie('refreshToken');
             } catch (error) {
               console.error('Error storing token in Redis:', error);

@@ -1,8 +1,9 @@
-import { AdminRole, Admins } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+import { AdminsEntity } from 'src/components/admin/users/entities/admin.entity';
+import { AdminRole } from 'src/helpers/constants/adminRole.enum';
 
-export class AdminUsersType implements Admins {
+export class AdminUsersType extends AdminsEntity {
   @ApiProperty({ description: 'Unique identifier of the admin user' })
   id: string;
 
@@ -31,7 +32,7 @@ export class AdminUsersType implements Admins {
   role: AdminRole;
 }
 
-export class AdminUsersResponse implements Admins {
+export class AdminUsersResponse extends AdminsEntity {
   @ApiProperty({ description: 'Unique identifier of the admin user' })
   id: string;
 

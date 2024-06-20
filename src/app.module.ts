@@ -1,45 +1,57 @@
 import { MiddlewareConsumer, Module, OnModuleInit } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { AllExceptionsFilter } from './utils/core/allException.filter';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TerminusModule } from '@nestjs/terminus';
-import { RedisModule } from './libs/redis/redis.module';
-import { MinioModule } from './libs/minio/minio.module';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { validate } from './config/env.validation';
-import { CacheModule } from '@nestjs/cache-manager';
-import { RedisClientOptions } from 'redis';
-import { PrismaModule } from './utils/prisma/prisma.module';
-import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
-import { AuthGuard } from './common/guards/auth.guard';
-import { ExcludeNullInterceptor } from './common/interceptors/excludeNulls.interceptor';
-import { HealthModule } from './utils/health/health.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from './libs/logger/logger.module';
-import { LogsMiddleware } from './libs/logger/middleware/logs.middleware';
+import { HealthModule } from './utils/health/health.module';
 import { MediaModule } from './libs/media/media.module';
+import { MinioModule } from './libs/minio/minio.module';
 import { AdminTokenModule } from './components/admin/token/token.module';
-import { AdminUserCommonModule } from './components/admin/userCommon/userCommon.module';
 import { AdminAuthModule } from './components/admin/auth/auth.module';
-import { AdminUsersService } from './components/admin/users/users.service';
+import { AdminUserCommonModule } from './components/admin/userCommon/userCommon.module';
+import { AdminUsersModule } from './components/admin/users/users.module';
 import { CategoryModule } from './components/category/category.module';
 import { ProductModule } from './components/product/product.module';
-import { AdminUsersModule } from './components/admin/users/users.module';
+import { AllExceptionsFilter } from './utils/core/allException.filter';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import { ExcludeNullInterceptor } from './common/interceptors/excludeNulls.interceptor';
+import { AuthGuard } from './common/guards/auth.guard';
+import { LogsMiddleware } from './libs/logger/middleware/logs.middleware';
+import { TerminusModule } from '@nestjs/terminus';
+import DatabaseLogger from './libs/logger/helpers/databaseLogger';
+import { AdminUsersService } from './components/admin/users/users.service';
+import { AdminsEntity } from './components/admin/users/entities/admin.entity';
+import { ClientUsersCommonModule } from './components/client/usersCommon/usersCommon.module';
+import { ClientAuthModule } from './components/client/auth/auth.module';
+import { ClientTokenModule } from './components/client/token/token.module';
+import { UsersModule } from './components/client/users/users.module';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([AdminsEntity]),
     ConfigModule.forRoot({
-      envFilePath: `.${process.env.NODE_ENV}.env`,
-      validate,
+      envFilePath: `.env.${process.env.NODE_ENV}`,
+      // validate,
       isGlobal: true,
       cache: true,
     }),
-    CacheModule.registerAsync<RedisClientOptions>({
+
+    TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        store: 'redis',
-        ttl: 60,
-        host: configService.getOrThrow<string>('REDIS_HOST'),
-        port: configService.getOrThrow<number>('REDIS_PORT'),
-        no_ready_check: true,
+        type: 'postgres',
+        host: configService.getOrThrow<string>('POSTGRES_HOST'),
+        port: configService.getOrThrow<number>('POSTGRES_PORT'),
+        username: configService.getOrThrow<string>('POSTGRES_USER'),
+        password: configService.getOrThrow<string>('POSTGRES_PASSWORD'),
+        database: configService.getOrThrow<string>('POSTGRES_DB'),
+        entities: ['entity/**/.entity.ts'],
+        migrations: ['src/migrations/*.ts'],
+        migrationsTableName: 'custom_migration_table',
+        autoLoadEntities: true,
+        synchronize: true,
+        logger: new DatabaseLogger(),
       }),
     }),
     TerminusModule.forRoot(),
@@ -47,8 +59,6 @@ import { AdminUsersModule } from './components/admin/users/users.module';
     HealthModule,
     MediaModule,
     MinioModule,
-    RedisModule,
-    PrismaModule,
     AdminTokenModule,
     AdminAuthModule,
     AdminUserCommonModule,
@@ -56,6 +66,10 @@ import { AdminUsersModule } from './components/admin/users/users.module';
     CategoryModule,
     ProductModule,
     AdminTokenModule,
+    ClientUsersCommonModule,
+    ClientAuthModule,
+    ClientTokenModule,
+    UsersModule,
   ],
   providers: [
     {

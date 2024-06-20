@@ -10,8 +10,10 @@ import {
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/isPublic.decorator';
 import { IS_ADMIN_KEY } from '../decorators/isAdmin.decorator';
-import { AdminTokenService } from 'src/components/admin/token/token.service';
 import { ROLES_KEY } from '../decorators/role.decorator';
+import { AdminTokenService } from 'src/components/admin/token/token.service';
+import { ClientTokenService } from 'src/components/client/token/token.service';
+import { IS_CLIENT_KEY } from '../decorators/isClient.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -19,7 +21,7 @@ export class AuthGuard implements CanActivate {
 
   constructor(
     private adminTokenService: AdminTokenService,
-    private redisService: RedisService,
+    private clientTokenService: ClientTokenService,
     private reflector: Reflector,
   ) {}
 
@@ -31,6 +33,11 @@ export class AuthGuard implements CanActivate {
     ]);
 
     const isAdmin = this.reflector.getAllAndOverride(IS_ADMIN_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    const isClient = this.reflector.getAllAndOverride(IS_CLIENT_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -63,11 +70,21 @@ export class AuthGuard implements CanActivate {
             `You don't have permissions to do this request`,
           );
         }
-        const tokenInBlackList = await this.redisService.getRedisToken(token);
-        if (tokenInBlackList) {
-          this.logger.error('Token is invalid');
-          throw new UnauthorizedException('Token is invalid');
-        }
+        // const tokenInBlackList = await this.redisService.getRedisToken(token);
+        // if (tokenInBlackList) {
+        //   this.logger.error('Token is invalid');
+        //   throw new UnauthorizedException('Token is invalid');
+        // }
+        req.currentUser = userToken;
+      }
+
+      if (isClient) {
+        const userToken = this.clientTokenService.validateAccessToken(token);
+        // const tokenInBlackList = await this.redisService.getRedisToken(token);
+        // if (tokenInBlackList) {
+        //   this.logger.error('Token is invalid');
+        //   throw new UnauthorizedException('Token is invalid');
+        // }
         req.currentUser = userToken;
       }
 
