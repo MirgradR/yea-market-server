@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { UsersEntity } from '../users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,6 +21,7 @@ export class UsersCommonService {
       this.logger.warn(
         `Пользователь с адресом электронной почты ${email} не найден`,
       );
+      throw new NotFoundException('User with this email not found!');
     }
     return user;
   }
@@ -34,6 +35,7 @@ export class UsersCommonService {
       this.logger.warn(
         `Пользователь с номером телефона ${phoneNumber} не найден`,
       );
+      throw new NotFoundException('User with this phone number not found!');
     }
     return user;
   }
@@ -45,6 +47,7 @@ export class UsersCommonService {
     });
     if (!user) {
       this.logger.warn(`Пользователь с ID ${userId} не найден`);
+      throw new NotFoundException('User with this id not found!');
     }
     return user;
   }

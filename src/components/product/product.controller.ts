@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
@@ -19,7 +20,6 @@ import { CreateProductOperation } from './decorators/createProductOperation.deco
 import { GetProductsResponse } from './responses/getProducts.response';
 import { GetProductsOperation } from './decorators/getProductsOperation.decorator';
 import { GetOneProductOperation } from './decorators/getOneProductOperation.decorator';
-import { ProductType } from 'src/helpers/types/product.type';
 import { UpdateProductOperation } from './decorators/updateProductOperation.decorator';
 import { UpdateProductResponse } from './responses/updateProduct.response';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
@@ -33,6 +33,13 @@ import { CreateProductCategoryOperation } from './decorators/createProductCatego
 import { DeleteProductCategoryOperation } from './decorators/deleteProductCategory.decorator';
 import { UploadProductImageOperation } from './decorators/uploadProductImageOperation.decorator';
 import { DeleteProductImageOperation } from './decorators/deleteProductImageOperation.decorator';
+import { GetNewArrivedProductsOperation } from './decorators/getNewArrivedProductsOperation.decorator';
+import { GetProductsDto, GetProductsQuery } from './dto/getProducts.query';
+import { GetColorsOperation } from './decorators/getColorsOperation.decorator';
+import { GetOneProductResponse } from './responses/getOneProductResponse';
+import { DeleteTagOperation } from './decorators/deleteTagOperation.decorator';
+import { CreateTagDto } from '../tags/dto/createTag.dto';
+import { CreateTagOperation } from './decorators/createTagOperation.decorator';
 
 @ApiTags('products')
 @ApiBearerAuth()
@@ -50,15 +57,24 @@ export class ProductController {
 
   @Get()
   @GetProductsOperation()
-  async getProducts(): Promise<GetProductsResponse> {
-    return await this.productService.getProducts();
+  async getProducts(
+    @Query() query?: GetProductsQuery,
+    @Body() dto?: GetProductsDto,
+  ): Promise<GetProductsResponse> {
+    return await this.productService.getProducts(query, dto);
+  }
+
+  @Get('/new-arrived')
+  @GetNewArrivedProductsOperation()
+  async getNewArrivedProducts() {
+    return await this.productService.getNewArrivedProducts();
   }
 
   @Get(':productId')
   @GetOneProductOperation()
   async getOneProduct(
     @Param('productId', ParseUUIDPipe) productId: string,
-  ): Promise<ProductType> {
+  ): Promise<GetOneProductResponse> {
     return await this.productService.getOneProduct(productId);
   }
 
@@ -77,6 +93,23 @@ export class ProductController {
     @Param('productId', ParseUUIDPipe) productId: string,
   ): Promise<SuccessMessageType> {
     return await this.productService.deleteProduct(productId);
+  }
+
+  @Post('tags/:productId')
+  @CreateTagOperation()
+  async createTag(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Body() dto: CreateTagDto,
+  ): Promise<SuccessMessageType> {
+    return await this.productService.createTag(dto, productId);
+  }
+
+  @Delete('tags/:tagId')
+  @DeleteTagOperation()
+  async deleteTag(
+    @Param('tagId', ParseUUIDPipe) tagId: string,
+  ): Promise<SuccessMessageType> {
+    return await this.productService.deleteTag(tagId);
   }
 
   @Post(':productId/colors')
@@ -137,5 +170,11 @@ export class ProductController {
     @Param('imageId', ParseUUIDPipe) imageId: string,
   ): Promise<SuccessMessageType> {
     return await this.productService.deleteImage(productId, imageId);
+  }
+
+  @Get('colors')
+  @GetColorsOperation()
+  async getColors() {
+    return await this.productService.getColors();
   }
 }

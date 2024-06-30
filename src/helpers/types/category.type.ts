@@ -1,9 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-
 import { Exclude } from 'class-transformer';
-import { CategoryEntity } from 'src/components/category/entities/category.entity';
 
-export class CategoryType extends CategoryEntity {
+export class CategoryType {
   @ApiProperty({
     description: 'Unique identifier of the category',
     example: '123e4567-e89b-12d3-a456-426614174000',

@@ -1,9 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { AdminsEntity } from 'src/components/admin/users/entities/admin.entity';
 import { AdminRole } from 'src/helpers/constants/adminRole.enum';
 
-export class AdminUsersType extends AdminsEntity {
+export class AdminUsersType {
   @ApiProperty({ description: 'Unique identifier of the admin user' })
   id: string;
 
@@ -32,7 +31,7 @@ export class AdminUsersType extends AdminsEntity {
   role: AdminRole;
 }
 
-export class AdminUsersResponse extends AdminsEntity {
+export class AdminUsersResponse {
   @ApiProperty({ description: 'Unique identifier of the admin user' })
   id: string;
 
@@ -45,15 +44,19 @@ export class AdminUsersResponse extends AdminsEntity {
   @ApiProperty({ description: 'Email address of the admin user' })
   email: string;
 
+  @ApiHideProperty()
   @Exclude()
   createdAt: Date;
 
+  @ApiHideProperty()
   @Exclude()
   updatedAt: Date;
 
+  @ApiHideProperty()
   @Exclude()
   password: string;
 
+  @ApiHideProperty()
   @Exclude()
   phoneNumber: string;
 

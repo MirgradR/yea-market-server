@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6
+      author: David
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone_number
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: company
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: country_region
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: street_address
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: deleted
+                  type: boolean
+                  constraints:
+                    nullable: false
+                    defaultValue: false
+        - addUniqueConstraint:
+            columnNames: email
+            tableName: users
+            constraintName: unique_users_email
+        - addForeignKeyConstraint:
+            baseTableName: users
+            baseColumnNames: id
+            constraintName: fk_users_token
+            referencedTableName: user_tokens
+            referencedColumnNames: user_id
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: users
+            baseColumnNames: id
+            constraintName: fk_users_basket
+            referencedTableName: basket
+            referencedColumnNames: user_id
+            onDelete: SET NULL

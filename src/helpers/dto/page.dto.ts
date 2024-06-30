@@ -13,14 +13,14 @@ import { OrderType } from '../constants/orderEnum';
 export class PageOptionsDto {
   @ApiProperty({
     enum: OrderType,
-    default: OrderType.asc,
+    default: OrderType.ASC,
     description: 'Sorting order (ASC or DESC)',
     required: false,
   })
   @IsEnum(OrderType)
   @IsOptional()
   @Type(() => String)
-  readonly order?: OrderType = OrderType.asc;
+  readonly order?: OrderType = OrderType.ASC;
 
   @ApiProperty({
     type: Number,

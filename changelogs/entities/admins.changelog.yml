@@ -1,53 +1,80 @@
-changeSet:
-  id: 1-create-table-admins
-  author: Your Name
-  changes:
-    - createTable:
-        tableName: admins
-        columns:
-          - column:
-              name: id
-              type: uuid
-              constraints:
-                primaryKey: true
-                nullable: false
-          - column:
-              name: first_name
-              type: varchar(255)
-              constraints:
-                nullable: false
-          - column:
-              name: last_name
-              type: varchar(255)
-              constraints:
-                nullable: false
-          - column:
-              name: email
-              type: varchar(255)
-              constraints:
-                nullable: false
-          - column:
-              name: phone_number
-              type: varchar(255)
-              constraints:
-                nullable: false
-          - column:
-              name: role
-              type: varchar(255)
-              constraints:
-                nullable: false
-          - column:
-              name: password
-              type: varchar(255)
-              constraints:
-                nullable: false
-          - column:
-              name: created_at
-              type: timestamptz
-              constraints:
-                nullable: false
-          - column:
-              name: updated_at
-              type: timestamptz
-              constraints:
-                nullable: false
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: David
+      changes:
+        - createTable:
+            tableName: admins
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone_number
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            tableName: admins
+            indexName: idx_admins_email
+            columns:
+              - column:
+                  name: email
+        - addUniqueConstraint:
+            columnNames: email
+            tableName: admins
+            constraintName: unique_admins_email
+        - addForeignKeyConstraint:
+            baseTableName: admins
+            baseColumnNames: id
+            constraintName: fk_admins_media
+            referencedTableName: media
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: admins
+            baseColumnNames: id
+            constraintName: fk_admins_token
+            referencedTableName: admin_tokens
+            referencedColumnNames: admin_id
+            onDelete: SET NULL

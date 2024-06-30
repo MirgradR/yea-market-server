@@ -26,6 +26,14 @@ import { ClientUsersCommonModule } from './components/client/usersCommon/usersCo
 import { ClientAuthModule } from './components/client/auth/auth.module';
 import { ClientTokenModule } from './components/client/token/token.module';
 import { UsersModule } from './components/client/users/users.module';
+import { MailsModule } from './components/mails/mails.module';
+import { FavoritesModule } from './components/favorites/favorites.module';
+import { ProductCommonModule } from './components/productCommon/productCommon.module';
+import { ReviewsModule } from './components/reviews/reviews.module';
+import { OrdersModule } from './components/orders/orders.module';
+import { BasketModule } from './components/basket/basket.module';
+import { BlogModule } from './components/blog/blog.module';
+import { TagsModule } from './components/tags/tags.module';
 
 @Module({
   imports: [
@@ -51,7 +59,6 @@ import { UsersModule } from './components/client/users/users.module';
         migrationsTableName: 'custom_migration_table',
         autoLoadEntities: true,
         synchronize: true,
-        logger: new DatabaseLogger(),
       }),
     }),
     TerminusModule.forRoot(),
@@ -70,6 +77,14 @@ import { UsersModule } from './components/client/users/users.module';
     ClientAuthModule,
     ClientTokenModule,
     UsersModule,
+    MailsModule,
+    FavoritesModule,
+    ProductCommonModule,
+    ReviewsModule,
+    OrdersModule,
+    BasketModule,
+    BlogModule,
+    TagsModule,
   ],
   providers: [
     {

@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: David
+      changes:
+        - createTable:
+            tableName: blogs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: blog_category_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: blogs
+            baseColumnNames: blog_category_id
+            constraintName: fk_blogs_blog_category
+            referencedTableName: blog_categories
+            referencedColumnNames: id
+        - createIndex:
+            tableName: blogs
+            indexName: idx_blogs_title
+            columns:
+              - column:
+                  name: title

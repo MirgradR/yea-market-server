@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: David
+      changes:
+        - createTable:
+            tableName: basket
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: basket
+            baseColumnNames: user_id
+            constraintName: fk_basket_user
+            referencedTableName: users
+            referencedColumnNames: id

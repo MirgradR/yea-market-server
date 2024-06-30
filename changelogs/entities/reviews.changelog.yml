@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5
+      author: David
+      changes:
+        - createTable:
+            tableName: user_reviews
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: star
+                  type: float
+                  constraints:
+                    nullable: false
+              - column:
+                  name: comment
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: user_reviews
+            baseColumnNames: product_id
+            constraintName: fk_user_reviews_product
+            referencedTableName: products
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: user_reviews
+            baseColumnNames: user_id
+            constraintName: fk_user_reviews_user
+            referencedTableName: users
+            referencedColumnNames: id
+        - createIndex:
+            tableName: user_reviews
+            indexName: idx_user_reviews_product
+            columns:
+              - column:
+                  name: product_id
+        - createIndex:
+            tableName: user_reviews
+            indexName: idx_user_reviews_user
+            columns:
+              - column:
+                  name: user_id
