@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { AdminUsersResponse } from 'src/helpers/types/admin/user.type';
 
-export class GetUsersResponse {
+export class GetAdminUsersResponse {
   @Type(() => AdminUsersResponse)
   @ApiProperty({ type: [AdminUsersResponse] })
   users: AdminUsersResponse[];

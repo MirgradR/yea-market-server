@@ -38,7 +38,7 @@ export class ClientAuthService {
     });
     if (candidate)
       throw new ConflictException(
-        `Пользователь с электронной почтой ${dto.email} уже существует`,
+        `User with email ${dto.email} already exists`,
       );
     dto.password = await generateHash(dto.password);
     const user = this.userRepository.create(dto);
@@ -51,32 +51,28 @@ export class ClientAuthService {
 
     await this.tokenService.saveTokens(user.id, tokens.refreshToken);
 
-    this.logger.log(`Пользователь зарегистрирован: ${dto.email}`);
+    this.logger.log(`User registered: ${dto.email}`);
     return {
-      message: 'Пользователь успешно зарегистрирован',
+      message: 'User registered successfully',
       user,
       ...tokens,
     };
   }
 
   async userLogin(dto: UserLoginDto): Promise<UserLoginResponse> {
-    this.logger.log('Попытка входа пользователя...');
+    this.logger.log('User login attempt...');
     const user = await this.userCommonService.findUserByEmail(dto.email);
 
     if (!user) {
-      this.logger.error(
-        `Пользователь с электронной почтой ${dto.email} не найден`,
-      );
-      throw new NotFoundException(
-        `Пользователь с электронной почтой ${dto.email} не найден!`,
-      );
+      this.logger.error(`User with email ${dto.email} not found`);
+      throw new NotFoundException(`User with email ${dto.email} not found!`);
     }
 
     const isPasswordCorrect = await verifyHash(dto.password, user.password);
 
     if (!isPasswordCorrect) {
-      this.logger.error('Неверный пароль');
-      throw new BadRequestException('Неверный пароль!');
+      this.logger.error('Incorrect password');
+      throw new BadRequestException('Incorrect password!');
     }
 
     const tokens = this.tokenService.generateTokens({
@@ -85,41 +81,41 @@ export class ClientAuthService {
 
     await this.tokenService.saveTokens(user.id, tokens.refreshToken);
 
-    this.logger.log(`Успешный вход пользователя: ${dto.email}`);
-    return { message: 'Успешный вход пользователя!', user, ...tokens };
+    this.logger.log(`User logged in successfully: ${dto.email}`);
+    return { message: 'User logged in successfully!', user, ...tokens };
   }
 
   async logoutUser(refreshToken: string): Promise<SuccessMessageType> {
     if (!refreshToken) {
-      throw new UnauthorizedException('Не предоставлен обновляющий токен');
+      throw new UnauthorizedException('Refresh token not provided');
     }
 
     await this.tokenService.deleteToken(refreshToken);
 
-    this.logger.log('Пользователь разлогинен');
-    return { message: 'Пользователь разлогинен' };
+    this.logger.log('User logged out');
+    return { message: 'User logged out' };
   }
 
   async refreshTokens(refreshToken: string): Promise<UserRefreshResponse> {
-    this.logger.log('Попытка обновления токенов...');
+    this.logger.log('Attempting to refresh tokens...');
     if (!refreshToken) {
-      this.logger.error('Не предоставлен обновляющий токен!');
-      throw new UnauthorizedException('Не предоставлен обновляющий токен!');
+      this.logger.error('Refresh token not provided!');
+      throw new UnauthorizedException('Refresh token not provided!');
     }
 
     const tokenFromDB = await this.tokenService.findToken(refreshToken);
     const validToken = this.tokenService.validateRefreshToken(refreshToken);
 
     if (!validToken || !tokenFromDB) {
-      this.logger.error('Неверный токен!');
-      throw new UnauthorizedException('Неверный токен!');
+      this.logger.error('Invalid token!');
+      throw new UnauthorizedException('Invalid token!');
     }
 
     const user = await this.userCommonService.findUserById(validToken.id);
 
     if (!user) {
-      this.logger.error('Пользователь не найден!');
-      throw new NotFoundException('Пользователь не найден!');
+      this.logger.error('User not found!');
+      throw new NotFoundException('User not found!');
     }
 
     const tokens = this.tokenService.generateTokens({
@@ -128,9 +124,9 @@ export class ClientAuthService {
 
     await this.tokenService.saveTokens(user.id, tokens.refreshToken);
 
-    this.logger.log(`Токены успешно обновлены для пользователя: ${user.email}`);
+    this.logger.log(`Tokens refreshed successfully for user: ${user.email}`);
     return {
-      message: 'Токены успешно обновлены',
+      message: 'Tokens refreshed successfully',
       ...tokens,
       user,
     };

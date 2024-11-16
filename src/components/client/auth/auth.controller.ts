@@ -33,7 +33,6 @@ export class ClientAuthController {
   }
 
   @UserLoginOperation()
-  @HttpCode(200)
   @Post('login')
   async userLogin(@Body() dto: UserLoginDto): Promise<UserLoginResponse> {
     const { message, user, accessToken, refreshToken } =
@@ -63,7 +62,6 @@ export class ClientAuthController {
   }
 
   @UserLogoutOperation()
-  @HttpCode(200)
   @Post('logout')
   async logout(@Cookies('refreshToken') refreshToken: string) {
     const { message } = await this.authService.logoutUser(refreshToken);

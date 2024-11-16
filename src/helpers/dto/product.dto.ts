@@ -15,6 +15,7 @@ export class ProductDto extends OmitType(ProductType, [
   'id',
   'createdAt',
   'updatedAt',
+  'tags',
 ]) {
   @ApiProperty({ description: 'Category ids', type: [String] })
   @IsArray()
@@ -46,14 +47,6 @@ export class ProductDto extends OmitType(ProductType, [
   @ApiProperty({ description: 'Quantity of the product in stock' })
   @IsNumber()
   quantity: number;
-
-  @ApiProperty({
-    description: 'Tags associated with the product',
-    type: [String],
-  })
-  @IsArray()
-  @IsString({ each: true })
-  tags: string[];
 
   @ApiProperty({ description: 'Title of the product' })
   @IsString()

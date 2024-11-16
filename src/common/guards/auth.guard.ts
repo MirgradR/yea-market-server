@@ -65,7 +65,7 @@ export class AuthGuard implements CanActivate {
       if (isAdmin) {
         const userToken = this.adminTokenService.validateAccessToken(token);
 
-        if (role && !role.includes(userToken.role)) {
+        if ((role && !role.includes(userToken.role)) || !userToken.role) {
           throw new ForbiddenException(
             `You don't have permissions to do this request`,
           );
@@ -80,6 +80,7 @@ export class AuthGuard implements CanActivate {
 
       if (isClient) {
         const userToken = this.clientTokenService.validateAccessToken(token);
+
         // const tokenInBlackList = await this.redisService.getRedisToken(token);
         // if (tokenInBlackList) {
         //   this.logger.error('Token is invalid');

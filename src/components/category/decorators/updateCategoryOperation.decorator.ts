@@ -1,8 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiOperation,
-  ApiResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import { Admin } from 'src/common/decorators/isAdmin.decorator';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
@@ -10,8 +10,7 @@ import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
 export function UpdateCategoryOperation() {
   return applyDecorators(
     ApiOperation({ summary: 'Update a category' }),
-    ApiResponse({
-      status: 200,
+    ApiOkResponse({
       description: 'Category updated successfully',
       type: SuccessMessageType,
     }),

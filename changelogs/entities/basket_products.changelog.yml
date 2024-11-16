@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4
+      author: David
+      changes:
+        - createTable:
+            tableName: basket_products
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_price
+                  type: decimal(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: basket_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: basket_products
+            baseColumnNames: product_id
+            constraintName: fk_basket_products_product
+            referencedTableName: products
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: basket_products
+            baseColumnNames: basket_id
+            constraintName: fk_basket_products_basket
+            referencedTableName: basket
+            referencedColumnNames: id

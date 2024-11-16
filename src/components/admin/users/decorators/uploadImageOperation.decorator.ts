@@ -1,7 +1,9 @@
 import { applyDecorators, UseInterceptors } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiConsumes,
+  ApiOkResponse,
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
@@ -33,11 +35,10 @@ export function UploadImageOperation() {
     ),
     ApiConsumes('multipart/form-data'),
     ApiBody({ type: FileDto }),
-    ApiResponse({
-      status: 200,
+    ApiOkResponse({
       description: 'Image uploaded successfully',
       type: SuccessMessageType,
     }),
-    ApiResponse({ status: 400, description: 'Invalid image file' }),
+    ApiBadRequestResponse({ description: 'Invalid image file' }),
   );
 }

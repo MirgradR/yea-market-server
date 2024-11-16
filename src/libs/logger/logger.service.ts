@@ -31,7 +31,7 @@ export class LoggerService {
     const [logs, count] = await this.logRepository.findAndCount({
       where,
       order: {
-        [orderBy]: order === OrderType.asc ? OrderType.asc : OrderType.desc,
+        [orderBy]: order === OrderType.ASC ? OrderType.ASC : OrderType.DESC,
       },
       take: take,
       skip: (page - 1) * take,

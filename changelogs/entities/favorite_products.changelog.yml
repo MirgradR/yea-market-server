@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 7
+      author: David
+      changes:
+        - createTable:
+            tableName: favorite_products
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: favorite_products
+            baseColumnNames: product_id
+            constraintName: fk_favorite_products_product
+            referencedTableName: products
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: favorite_products
+            baseColumnNames: user_id
+            constraintName: fk_favorite_products_user
+            referencedTableName: users
+            referencedColumnNames: id

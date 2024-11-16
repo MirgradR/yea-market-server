@@ -7,6 +7,8 @@ import { ProductsEntity } from './entities/product.entity';
 import { CategoryEntity } from '../category/entities/category.entity';
 import { ColorEntity } from './entities/colors.entity';
 import { ProductCategoryEntity } from '../category/entities/productCategory.entity';
+import { ReviewsEntity } from '../reviews/entities/reviews.entity';
+import { TagsModule } from '../tags/tags.module';
 
 @Module({
   imports: [
@@ -15,8 +17,10 @@ import { ProductCategoryEntity } from '../category/entities/productCategory.enti
       ProductsEntity,
       CategoryEntity,
       ColorEntity,
+      ReviewsEntity,
       ProductCategoryEntity,
     ]),
+    TagsModule,
   ],
   controllers: [ProductController],
   providers: [ProductService],

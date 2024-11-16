@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6
+      author: David
+      changes:
+        - createTable:
+            tableName: tags
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tag
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: blog_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+        - addForeignKeyConstraint:
+            baseTableName: tags
+            baseColumnNames: blog_id
+            constraintName: fk_tags_blog
+            referencedTableName: blogs
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: tags
+            baseColumnNames: product_id
+            constraintName: fk_tags_product
+            referencedTableName: products
+            referencedColumnNames: id
+        - createIndex:
+            tableName: tags
+            indexName: idx_tags_blog
+            columns:
+              - column:
+                  name: blog_id
+        - createIndex:
+            tableName: tags
+            indexName: idx_tags_product
+            columns:
+              - column:
+                  name: product_id

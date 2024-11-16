@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: David
+      changes:
+        - createTable:
+            tableName: blog_categories
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            tableName: blog_categories
+            indexName: idx_blog_categories_title
+            columns:
+              - column:
+                  name: title

@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4
+      author: David
+      changes:
+        - createTable:
+            tableName: products
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stock_status
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: old_price
+                  type: decimal(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: decimal(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: details_desc
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: dimensions
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            tableName: products
+            indexName: idx_products_title
+            columns:
+              - column:
+                  name: title

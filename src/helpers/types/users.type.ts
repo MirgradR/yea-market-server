@@ -1,9 +1,9 @@
-import { UsersEntity } from 'src/components/client/users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 import { ClientTokensEntity } from 'src/components/client/token/entities/token.entity';
+import { MediaType } from './mediaType';
 
-export class UsersType extends UsersEntity {
+export class UsersType {
   @ApiProperty({
     example: '1',
     description: 'Уникальный идентификатор пользователя',
@@ -57,4 +57,6 @@ export class UsersType extends UsersEntity {
 
   @Exclude()
   token?: ClientTokensEntity;
+
+
 }
