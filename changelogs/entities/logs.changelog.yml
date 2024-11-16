@@ -1,0 +1,51 @@
+changeSet:
+  id: 5-create-table-logs
+  author: Your Name
+  changes:
+    - createTable:
+        tableName: logs
+        columns:
+          - column:
+              name: id
+              type: int
+              autoIncrement: true
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: host
+              type: varchar(255)
+          - column:
+              name: url
+              type: varchar(255)
+          - column:
+              name: status_code
+              type: int
+          - column:
+              name: method
+              type: varchar(255)
+          - column:
+              name: user
+              type: varchar(255)
+          - column:
+              name: context
+              type: varchar(255)
+          - column:
+              name: message
+              type: varchar(255)
+          - column:
+              name: level
+              type: varchar(255)
+          - column:
+              name: time
+              type: varchar(255)
+          - column:
+              name: created_at
+              type: timestamptz
+              constraints:
+                nullable: false
+          - column:
+              name: updated_at
+              type: timestamptz
+              constraints:
+                nullable: false

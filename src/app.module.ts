@@ -1,19 +1,102 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
-import { TypeormModule } from './typeorm/typeorm.module';
-import { UserModule } from './user/user.module';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { MiddlewareConsumer, Module, OnModuleInit } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { validate } from './config/env.validation';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggerModule } from './libs/logger/logger.module';
+import { HealthModule } from './utils/health/health.module';
+import { MediaModule } from './libs/media/media.module';
+import { MinioModule } from './libs/minio/minio.module';
+import { AdminTokenModule } from './components/admin/token/token.module';
+import { AdminAuthModule } from './components/admin/auth/auth.module';
+import { AdminUserCommonModule } from './components/admin/userCommon/userCommon.module';
+import { AdminUsersModule } from './components/admin/users/users.module';
+import { CategoryModule } from './components/category/category.module';
+import { ProductModule } from './components/product/product.module';
+import { AllExceptionsFilter } from './utils/core/allException.filter';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import { ExcludeNullInterceptor } from './common/interceptors/excludeNulls.interceptor';
+import { AuthGuard } from './common/guards/auth.guard';
+import { LogsMiddleware } from './libs/logger/middleware/logs.middleware';
+import { TerminusModule } from '@nestjs/terminus';
+import DatabaseLogger from './libs/logger/helpers/databaseLogger';
+import { AdminUsersService } from './components/admin/users/users.service';
+import { AdminsEntity } from './components/admin/users/entities/admin.entity';
+import { ClientUsersCommonModule } from './components/client/usersCommon/usersCommon.module';
+import { ClientAuthModule } from './components/client/auth/auth.module';
+import { ClientTokenModule } from './components/client/token/token.module';
+import { UsersModule } from './components/client/users/users.module';
 
 @Module({
-  imports: [TypeormModule, UserModule, ConfigModule.forRoot(), AuthModule],
-  controllers: [],
+  imports: [
+    TypeOrmModule.forFeature([AdminsEntity]),
+    ConfigModule.forRoot({
+      envFilePath: `.env.${process.env.NODE_ENV}`,
+      // validate,
+      isGlobal: true,
+      cache: true,
+    }),
+
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.getOrThrow<string>('POSTGRES_HOST'),
+        port: configService.getOrThrow<number>('POSTGRES_PORT'),
+        username: configService.getOrThrow<string>('POSTGRES_USER'),
+        password: configService.getOrThrow<string>('POSTGRES_PASSWORD'),
+        database: configService.getOrThrow<string>('POSTGRES_DB'),
+        entities: ['entity/**/.entity.ts'],
+        migrations: ['src/migrations/*.ts'],
+        migrationsTableName: 'custom_migration_table',
+        autoLoadEntities: true,
+        synchronize: true,
+        logger: new DatabaseLogger(),
+      }),
+    }),
+    TerminusModule.forRoot(),
+    LoggerModule,
+    HealthModule,
+    MediaModule,
+    MinioModule,
+    AdminTokenModule,
+    AdminAuthModule,
+    AdminUserCommonModule,
+    AdminUsersModule,
+    CategoryModule,
+    ProductModule,
+    AdminTokenModule,
+    ClientUsersCommonModule,
+    ClientAuthModule,
+    ClientTokenModule,
+    UsersModule,
+  ],
   providers: [
     {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TimeoutInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ExcludeNullInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    AdminUsersService,
   ],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  constructor(private adminUserService: AdminUsersService) {}
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LogsMiddleware).forRoutes('*');
+  }
+  async onModuleInit() {
+    await this.adminUserService.checkDefaultAdminUser();
+  }
+}
