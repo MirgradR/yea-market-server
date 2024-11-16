@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/createCategory.dto';
 import { UpdateCategoryDto } from './dto/updateCategory.dto';
 import { GetCategoriesQuery } from './dto/getCategories.query';
@@ -27,30 +27,30 @@ export class CategoryService {
   async createCategory(
     dto: CreateCategoryDto,
   ): Promise<CreateCategoryResponse> {
-    this.logger.log(`Создание категории с названием ${dto.title}`);
+    this.logger.log(`Creating category with title ${dto.title}`);
 
     const existingCategory = await this.categoryRepository.findOne({
       where: { title: dto.title },
     });
 
     if (existingCategory) {
-      this.logger.error(`Категория с названием ${dto.title} уже существует`);
+      this.logger.error(`Category with title ${dto.title} already exists`);
       throw new ConflictException(
-        `Категория с названием ${dto.title} уже существует`,
+        `Category with title ${dto.title} already exists`,
       );
     }
 
     const newCategory = this.categoryRepository.create(dto);
     await this.categoryRepository.save(newCategory);
 
-    this.logger.log(`Категория ${dto.title} успешно создана`);
-    return { message: 'Категория успешно создана', category: newCategory };
+    this.logger.log(`Category ${dto.title} created successfully`);
+    return { message: 'Category created successfully', category: newCategory };
   }
 
   async getCategories(
     query?: GetCategoriesQuery,
   ): Promise<GetCategoriesResponse> {
-    this.logger.log('Получение списка категорий');
+    this.logger.log('Fetching list of categories');
 
     const { page = 1, take = 10 } = query;
     const [categories, totalCount] = await this.categoryRepository.findAndCount(
@@ -60,16 +60,26 @@ export class CategoryService {
       },
     );
 
-    this.logger.log('Список категорий успешно получен');
+    this.logger.log('List of categories fetched successfully');
     return { totalCount, categories };
   }
 
   async getOneCategory(categoryId: string): Promise<CategoryType> {
-    this.logger.log(`Получение категории с ID ${categoryId}`);
+    this.logger.log(`Fetching category with ID ${categoryId}`);
 
-    const category = await this.findCategoryById(categoryId);
+    const category = await this.categoryRepository.findOne({
+      where: { id: categoryId },
+      relations: {
+        productCategory: { product: { colors: true, medias: true } },
+      },
+    });
 
-    this.logger.log(`Категория с ID ${categoryId} получена`);
+    if (!category) {
+      this.logger.error(`Category with ID ${categoryId} not found`);
+      throw new NotFoundException(`Category with ID ${categoryId} not found`);
+    }
+
+    this.logger.log(`Category with ID ${categoryId} fetched`);
     return category;
   }
 
@@ -77,40 +87,44 @@ export class CategoryService {
     dto: UpdateCategoryDto,
     categoryId: string,
   ): Promise<SuccessMessageType> {
-    this.logger.log(`Обновление категории с ID ${categoryId}`);
-
+    this.logger.log(`Updating category with ID ${categoryId}`);
+    const candidate = await this.categoryRepository.findOne({
+      where: { title: dto.title, id: Not(categoryId) },
+    });
+    if (candidate)
+      throw new ConflictException('Category with this title already exists');
     const category = await this.findCategoryById(categoryId);
 
     await this.categoryRepository.update(category.id, dto);
 
-    this.logger.log(`Категория с ID ${categoryId} успешно обновлена`);
-    return { message: 'Категория успешно обновлена' };
+    this.logger.log(`Category with ID ${categoryId} updated successfully`);
+    return { message: 'Category updated successfully' };
   }
 
   async deleteCategory(categoryId: string): Promise<SuccessMessageType> {
-    this.logger.log(`Удаление категории с ID ${categoryId}`);
+    this.logger.log(`Deleting category with ID ${categoryId}`);
 
     const category = await this.findCategoryById(categoryId);
 
     await this.categoryRepository.delete(category.id);
 
-    this.logger.log(`Категория с ID ${categoryId} успешно удалена`);
-    return { message: 'Категория успешно удалена' };
+    this.logger.log(`Category with ID ${categoryId} deleted successfully`);
+    return { message: 'Category deleted successfully' };
   }
 
   private async findCategoryById(categoryId: string): Promise<CategoryType> {
-    this.logger.log(`Поиск категории с ID ${categoryId}`);
+    this.logger.log(`Finding category with ID ${categoryId}`);
 
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
     });
 
     if (!category) {
-      this.logger.error(`Категория с ID ${categoryId} не найдена`);
-      throw new NotFoundException(`Категория с ID ${categoryId} не найдена`);
+      this.logger.error(`Category with ID ${categoryId} not found`);
+      throw new NotFoundException(`Category with ID ${categoryId} not found`);
     }
 
-    this.logger.log(`Категория с ID ${categoryId} найдена`);
+    this.logger.log(`Category with ID ${categoryId} found`);
     return category;
   }
 }

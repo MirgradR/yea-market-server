@@ -1,5 +1,9 @@
 import { applyDecorators, UseInterceptors } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { imageFilter } from 'src/common/filters/imageFilter';
 import { randomUUID } from 'crypto';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
@@ -10,13 +14,11 @@ import { diskStorage } from 'multer';
 export function UploadProductImageOperation() {
   return applyDecorators(
     ApiOperation({ summary: 'Upload an image for a product' }),
-    ApiResponse({
-      status: 200,
+    ApiOkResponse({
       description: 'Image uploaded successfully',
       type: SuccessMessageType,
     }),
-    ApiResponse({ status: 404, description: 'Product with this ID not found' }),
-    ApiResponse({ status: 400, description: 'Bad request' }),
+    ApiNotFoundResponse({ description: 'Product with this ID not found' }),
     UseInterceptors(
       FileInterceptor('image', {
         storage: diskStorage({

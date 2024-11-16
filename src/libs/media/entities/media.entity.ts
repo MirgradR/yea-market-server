@@ -11,6 +11,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { BlogsEntity } from 'src/components/blog/entities/blog.entity';
 
 @Entity('medias')
 export class MediaEntity {
@@ -80,6 +81,15 @@ export class MediaEntity {
   })
   productId: string;
 
+  @Column({ name: 'blog_id', nullable: true })
+  @ApiProperty({
+    description: 'Identifier of the blog associated with the media',
+    example: '123e4567-e89b-12d3-a456-426614174002',
+    type: String,
+    required: false,
+  })
+  blogId: string;
+
   @Column({
     type: 'enum',
     enum: FileTypeEnum,
@@ -118,4 +128,10 @@ export class MediaEntity {
   })
   @JoinColumn({ name: 'product_id' })
   product: ProductsEntity;
+
+  @ManyToOne(() => BlogsEntity, (blog) => blog.medias, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'blog_id' })
+  blog: BlogsEntity;
 }

@@ -8,10 +8,9 @@ import {
   IsString,
   IsStrongPassword,
 } from 'class-validator';
-import { AdminsEntity } from 'src/components/admin/users/entities/admin.entity';
 import { AdminRole } from 'src/helpers/constants/adminRole.enum';
 
-export class AdminUsersDto extends AdminsEntity {
+export class AdminUsersDto {
   @ApiProperty({ example: '1', description: 'Unique identifier for the admin' })
   id: string;
 

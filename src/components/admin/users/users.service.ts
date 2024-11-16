@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/createUser.dto';
-import { UpdateUserDto } from './dto/updateUser.dto';
+import { CreateAdminUserDto } from './dto/createUser.dto';
+import { UpdateAdminUserDto } from './dto/updateUser.dto';
 import { ITransformedFile } from 'src/helpers/interfaces/fileTransform.interface';
 import { MediaService } from 'src/libs/media/media.service';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
@@ -15,8 +15,10 @@ import { AdminsEntity } from './entities/admin.entity';
 import { generateHash } from 'src/helpers/providers/generateHash';
 import { GetUsersQuery } from './dto/getUsers.query';
 import { AdminRole } from 'src/helpers/constants/adminRole.enum';
-import { UpdateUserResponse } from './responses/updateUser.response';
+import { UpdateAdminUserResponse } from './responses/updateUser.response';
 import { AdminTokenDto } from '../token/dto/token.dto';
+import { UserCommonService } from '../userCommon/userCommon.service';
+import { MinioService } from 'src/libs/minio/minio.service';
 
 @Injectable()
 export class AdminUsersService {
@@ -25,11 +27,13 @@ export class AdminUsersService {
   constructor(
     @InjectRepository(AdminsEntity)
     private adminsRepository: Repository<AdminsEntity>,
+    private adminUserCommonService: UserCommonService,
     private mediaService: MediaService,
+    private minioService: MinioService,
   ) {}
 
   async checkDefaultAdminUser() {
-    const dto: CreateUserDto = {
+    const dto: CreateAdminUserDto = {
       firstName: 'Test',
       lastName: 'Test',
       password: 'Test1234!',
@@ -50,7 +54,7 @@ export class AdminUsersService {
     }
   }
 
-  async createUser(dto: CreateUserDto): Promise<AdminsEntity> {
+  async createUser(dto: CreateAdminUserDto): Promise<AdminsEntity> {
     this.logger.log(`Попытка создания пользователя с email ${dto.email}`);
 
     const candidate = await this.adminsRepository.findOne({
@@ -60,7 +64,7 @@ export class AdminUsersService {
     if (candidate) {
       this.logger.error(`Пользователь с email ${dto.email} уже существует`);
       throw new ConflictException(
-        `Пользователь с email ${dto.email} уже существует`,
+        `User with email ${dto.email} already exists`,
       );
     }
 
@@ -84,14 +88,7 @@ export class AdminUsersService {
   async getMe(currentUser: AdminTokenDto): Promise<AdminsEntity> {
     this.logger.log(`Запрос данных пользователя с id ${currentUser.id}`);
 
-    const user = await this.adminsRepository.findOne({
-      where: { id: currentUser.id },
-    });
-
-    if (!user) {
-      this.logger.error(`Пользователь с id ${currentUser.id} не найден`);
-      throw new NotFoundException('Пользователь не найден!');
-    }
+    const user = await this.adminUserCommonService.findUserById(currentUser.id);
 
     this.logger.log(`Пользователь с id ${currentUser.id} найден`);
     return user;
@@ -125,8 +122,9 @@ export class AdminUsersService {
     });
 
     if (!user) {
+      await this.minioService.deleteFile(image.fileName);
       this.logger.error(`Пользователь с id ${currentUser.id} не найден`);
-      throw new NotFoundException('Пользователь не найден!');
+      throw new NotFoundException('User not found!');
     }
 
     if (user.media) {
@@ -141,7 +139,7 @@ export class AdminUsersService {
       `Новое изображение загружено для пользователя с id ${currentUser.id}`,
     );
 
-    return { message: 'Изображение успешно загружено' };
+    return { message: 'Image uploaded successfully' };
   }
 
   async deleteImage(currentUser: AdminTokenDto): Promise<SuccessMessageType> {
@@ -153,14 +151,13 @@ export class AdminUsersService {
       where: { id: currentUser.id },
       relations: { media: true },
     });
-    console.log('🚀 ~ AdminUsersService ~ deleteImage ~ user:', user);
 
     if (!user || !user.media) {
       this.logger.error(
         'Изображение уже удалено или пользователя не существует',
       );
       throw new NotFoundException(
-        'Изображение уже удалено или пользователя не существует',
+        'Image already deleted or user does not exist',
       );
     }
 
@@ -169,25 +166,18 @@ export class AdminUsersService {
       `Изображение удалено для пользователя с id ${currentUser.id}`,
     );
 
-    return { message: 'Изображение успешно удалено' };
+    return { message: 'Image deleted successfully' };
   }
 
   async updateUser(
     currentUser: AdminTokenDto,
-    dto: UpdateUserDto,
-  ): Promise<UpdateUserResponse> {
+    dto: UpdateAdminUserDto,
+  ): Promise<UpdateAdminUserResponse> {
     this.logger.log(
       `Попытка обновления данных пользователя с id ${currentUser.id}`,
     );
 
-    const user = await this.adminsRepository.findOne({
-      where: { id: currentUser.id },
-    });
-
-    if (!user) {
-      this.logger.error(`Пользователь с id ${currentUser.id} не найден`);
-      throw new NotFoundException('Пользователь не найден!');
-    }
+    const user = await this.adminUserCommonService.findUserById(currentUser.id);
 
     if (dto.password) {
       dto.password = await generateHash(dto.password);
@@ -199,7 +189,7 @@ export class AdminUsersService {
       `Данные пользователя с id ${currentUser.id} успешно обновлены`,
     );
 
-    return { user, message: 'Данные пользователя успешно обновлены' };
+    return { user, message: 'User data updated successfully' };
   }
 
   async deleteUser(
@@ -210,21 +200,22 @@ export class AdminUsersService {
 
     if (currentUser.id === userId) {
       this.logger.error('Пользователь не может удалить сам себя');
-      throw new ConflictException('Пользователь не может удалить сам себя');
+      throw new ConflictException('User cannot delete themselves');
     }
 
-    const user = await this.adminsRepository.findOne({
-      where: { id: userId },
-    });
+    const user = await this.adminUserCommonService.findUserById(currentUser.id);
 
-    if (!user) {
-      this.logger.error(`Пользователь с id ${userId} не найден`);
-      throw new NotFoundException('Пользователь не найден!');
+    if (user.media && user.media.id) {
+      this.logger.log(
+        `Удаление медиа с id ${user.media.id} для пользователя с id ${userId}`,
+      );
+      await this.mediaService.deleteOneMedia(user.media.id);
+      this.logger.log(`Медиа с id ${user.media.id} успешно удалено`);
     }
 
     await this.adminsRepository.delete(userId);
     this.logger.log(`Пользователь с id ${userId} успешно удален`);
 
-    return { message: 'Пользователь успешно удален' };
+    return { message: 'User deleted successfully' };
   }
 }

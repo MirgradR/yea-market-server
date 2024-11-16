@@ -1,51 +1,72 @@
-changeSet:
-  id: 5-create-table-logs
-  author: Your Name
-  changes:
-    - createTable:
-        tableName: logs
-        columns:
-          - column:
-              name: id
-              type: int
-              autoIncrement: true
-              constraints:
-                primaryKey: true
-                nullable: false
-          - column:
-              name: host
-              type: varchar(255)
-          - column:
-              name: url
-              type: varchar(255)
-          - column:
-              name: status_code
-              type: int
-          - column:
-              name: method
-              type: varchar(255)
-          - column:
-              name: user
-              type: varchar(255)
-          - column:
-              name: context
-              type: varchar(255)
-          - column:
-              name: message
-              type: varchar(255)
-          - column:
-              name: level
-              type: varchar(255)
-          - column:
-              name: time
-              type: varchar(255)
-          - column:
-              name: created_at
-              type: timestamptz
-              constraints:
-                nullable: false
-          - column:
-              name: updated_at
-              type: timestamptz
-              constraints:
-                nullable: false
+databaseChangeLog:
+  - changeSet:
+      id: 7
+      author: David
+      changes:
+        - createTable:
+            tableName: logs
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                    autoIncrement: true
+                    nullable: false
+              - column:
+                  name: host
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: url
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: status_code
+                  type: int
+                  constraints:
+                    nullable: true
+              - column:
+                  name: method
+                  type: varchar(50)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: user
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: context
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: message
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: level
+                  type: varchar(50)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: time
+                  type: varchar(50)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+                    defaultValueComputed: CURRENT_TIMESTAMP

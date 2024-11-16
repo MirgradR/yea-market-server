@@ -1,8 +1,9 @@
-import { applyDecorators, UseInterceptors } from '@nestjs/common';
+import { applyDecorators, HttpCode, UseInterceptors } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
@@ -16,8 +17,7 @@ export function UserLoginOperation() {
   return applyDecorators(
     ApiOperation({ summary: 'User login' }),
     ApiBody({ type: UserLoginDto }),
-    ApiResponse({
-      status: 200,
+    ApiOkResponse({
       description: 'User login successful!',
       type: UserLoginResponse,
     }),
@@ -28,5 +28,6 @@ export function UserLoginOperation() {
       SetCookieInterceptor,
       new TransformDataInterceptor(UserLoginResponse),
     ),
+    HttpCode(200),
   );
 }

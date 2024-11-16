@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -12,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { AdminUsersService } from './users.service';
 import { CurrentUser } from 'src/common/decorators/currentUser.decorator';
-import { UpdateUserDto } from './dto/updateUser.dto';
+import { UpdateAdminUserDto } from './dto/updateUser.dto';
 import { ImageTransformer } from 'src/common/pipes/imageTransform.pipe';
 import { ITransformedFile } from 'src/helpers/interfaces/fileTransform.interface';
 import { GetUsersQuery } from './dto/getUsers.query';
@@ -25,11 +26,11 @@ import { UploadImageOperation } from './decorators/uploadImageOperation.decorato
 import { DeleteImageOperation } from './decorators/deleteImageOperation.decorator';
 import { GetUsersOperation } from './decorators/getUsersOperation.decorator';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
-import { GetUsersResponse } from './responses/getUsers.response';
+import { GetAdminUsersResponse } from './responses/getUsers.response';
 import { AdminUsersResponse } from 'src/helpers/types/admin/user.type';
-import { CreateUserDto } from './dto/createUser.dto';
+import { CreateAdminUserDto } from './dto/createUser.dto';
 import { CreateUserOperation } from './decorators/createUserOperation.decorator';
-import { UpdateUserResponse } from './responses/updateUser.response';
+import { UpdateAdminUserResponse } from './responses/updateUser.response';
 import { AdminTokenDto } from '../token/dto/token.dto';
 
 @ApiBearerAuth()
@@ -41,7 +42,9 @@ export class AdminUsersController {
 
   @Post()
   @CreateUserOperation()
-  async createUser(@Body() dto: CreateUserDto): Promise<AdminUsersResponse> {
+  async createUser(
+    @Body() dto: CreateAdminUserDto,
+  ): Promise<AdminUsersResponse> {
     return await this.usersService.createUser(dto);
   }
 
@@ -54,16 +57,19 @@ export class AdminUsersController {
   }
   @Get('')
   @GetUsersOperation()
-  async getUsers(@Query() query: GetUsersQuery): Promise<GetUsersResponse> {
+  async getUsers(
+    @Query() query: GetUsersQuery,
+  ): Promise<GetAdminUsersResponse> {
     return await this.usersService.getUsers(query);
-  }s
+  }
+  s;
 
   @Patch('')
   @UpdateUserOperation()
   async updateUser(
     @CurrentUser() currentUser: AdminTokenDto,
-    @Body() dto: UpdateUserDto,
-  ): Promise<UpdateUserResponse> {
+    @Body() dto: UpdateAdminUserDto,
+  ): Promise<UpdateAdminUserResponse> {
     return await this.usersService.updateUser(currentUser, dto);
   }
 

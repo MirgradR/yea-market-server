@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: David
+      changes:
+        - createTable:
+            tableName: colors
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: hex_code
+                  type: varchar(7)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: colors
+            baseColumnNames: product_id
+            constraintName: fk_colors_product
+            referencedTableName: products
+            referencedColumnNames: id
+        - createIndex:
+            tableName: colors
+            indexName: idx_colors_product
+            columns:
+              - column:
+                  name: product_id

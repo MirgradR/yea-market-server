@@ -15,14 +15,16 @@ export class ImageTransformer implements PipeTransform<Express.Multer.File> {
   constructor(private readonly minioService: MinioService) {}
 
   async transform(file: Express.Multer.File): Promise<ITransformedFile> {
-    let transformedFile: ITransformedFile;
-    if (!file.path || !file.destination || !file)
-      throw new BadRequestException('Image not provided');
-    try {
-      if (!file.path || !file.destination)
-        throw new BadRequestException('Image not provided');
-      const uploadStream = createReadStream(file.path);
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
 
+    if (!file.path) {
+      throw new BadRequestException('No file path provided');
+    }
+
+    try {
+      const uploadStream = createReadStream(file.path);
       await this.minioService.uploadFileStream(
         file.filename,
         uploadStream,
@@ -30,21 +32,24 @@ export class ImageTransformer implements PipeTransform<Express.Multer.File> {
         file.mimetype,
       );
 
-      transformedFile = {
+      const filePath = await this.minioService.getFileUrl(file.filename);
+
+      const transformedFile: ITransformedFile = {
         fileName: file.filename,
         originalName: file.originalname,
-        filePath: await this.minioService.getFileUrl(file.filename),
+        filePath: filePath,
         mimeType: file.mimetype,
         size: file.size.toString(),
         fileType: FileTypeEnum.IMAGE,
       };
+
       await unlink(file.path);
       return transformedFile;
     } catch (err) {
       console.error(`Error processing file ${file.originalname}:`, err);
       await unlink(file.path);
       throw new InternalServerErrorException(
-        'Failed to process some files. Please check server logs for details.',
+        'Failed to process the file. Please check server logs for details.',
       );
     }
   }

@@ -8,8 +8,8 @@ import {
 import { verifyHash } from 'src/helpers/providers/generateHash';
 import { UserLoginDto } from './dto/userLogin.dto';
 import { UserCommonService } from '../userCommon/userCommon.service';
-import { UserLoginResponse } from './responses/userLogin.response';
-import { UserRefreshResponse } from './responses/userRefresh.response';
+import { AdminUserLoginResponse } from './responses/userLogin.response';
+import { AdminUserRefreshResponse } from './responses/userRefresh.response';
 import { SuccessMessageType } from 'src/helpers/common/successMessage.type';
 import { AdminTokenService } from '../token/token.service';
 import { AdminTokenDto } from '../token/dto/token.dto';
@@ -22,7 +22,7 @@ export class AdminAuthService {
     private readonly tokenService: AdminTokenService,
   ) {}
 
-  async userLogin(dto: UserLoginDto): Promise<UserLoginResponse> {
+  async userLogin(dto: UserLoginDto): Promise<AdminUserLoginResponse> {
     this.logger.log('Попытка входа пользователя...');
     const user = await this.userCommonService.findUserByEmail(dto.email);
 
@@ -30,16 +30,14 @@ export class AdminAuthService {
       this.logger.error(
         `Пользователь с электронной почтой ${dto.email} не найден`,
       );
-      throw new NotFoundException(
-        `Пользователь с электронной почтой ${dto.email} не найден!`,
-      );
+      throw new NotFoundException(`User with email ${dto.email} not found!`);
     }
 
     const isPasswordCorrect = await verifyHash(dto.password, user.password);
 
     if (!isPasswordCorrect) {
       this.logger.error('Неверный пароль');
-      throw new BadRequestException('Неверный пароль!');
+      throw new BadRequestException('Incorrect password!');
     }
 
     const tokens = this.tokenService.generateTokens({
@@ -49,7 +47,7 @@ export class AdminAuthService {
     await this.tokenService.saveTokens(user.id, tokens.refreshToken);
 
     this.logger.log('Успешный вход пользователя');
-    return { message: 'Успешный вход пользователя!', user, ...tokens };
+    return { message: 'User login successful!', user, ...tokens };
   }
 
   async logoutUser(refreshToken: string): Promise<SuccessMessageType> {
@@ -62,7 +60,7 @@ export class AdminAuthService {
     return { message: 'User logged out' };
   }
 
-  async refreshTokens(refreshToken: string): Promise<UserRefreshResponse> {
+  async refreshTokens(refreshToken: string): Promise<AdminUserRefreshResponse> {
     this.logger.log('Попытка обновления токенов...');
     if (!refreshToken) {
       this.logger.error('Не предоставлен обновляющий токен!');
@@ -90,9 +88,9 @@ export class AdminAuthService {
 
     await this.tokenService.saveTokens(user.id, tokens.refreshToken);
 
-    this.logger.log('Токены успешно обновлены:');
+    this.logger.log('Токены успешно обновлены');
     return {
-      message: 'Токены успешно обновлены',
+      message: 'Tokens successfully refreshed',
       ...tokens,
       user,
     };

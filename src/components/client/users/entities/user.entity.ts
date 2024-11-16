@@ -6,8 +6,13 @@ import {
   UpdateDateColumn,
   OneToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { ClientTokensEntity } from '../../token/entities/token.entity';
+import { FavoriteProductsEntity } from 'src/components/favorites/entities/favoriteProduct.entity';
+import { ReviewsEntity } from 'src/components/reviews/entities/reviews.entity';
+import { BasketEntity } from 'src/components/basket/entities/basket.entity';
+import { OrderEntity } from 'src/components/orders/entities/order.entity';
 
 @Entity('users')
 export class UsersEntity {
@@ -47,4 +52,20 @@ export class UsersEntity {
   @OneToOne(() => ClientTokensEntity, (token) => token.user)
   @JoinColumn()
   token?: ClientTokensEntity;
+
+  @OneToMany(
+    () => FavoriteProductsEntity,
+    (favoriteProduct) => favoriteProduct.user,
+  )
+  favoriteProducts?: FavoriteProductsEntity[];
+
+  @OneToMany(() => ReviewsEntity, (reviews) => reviews.user)
+  reviews?: ReviewsEntity[];
+
+  @OneToOne(() => BasketEntity, (basket) => basket.user)
+  @JoinColumn()
+  basket?: BasketEntity;
+
+  @OneToMany(() => OrderEntity, (order) => order.user)
+  orders: OrderEntity[];
 }

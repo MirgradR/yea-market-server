@@ -3,7 +3,7 @@ import { ApiProperty, PickType } from '@nestjs/swagger';
 import { SuccessResponse } from 'src/helpers/common/successResponse.type';
 import { AdminUsersResponse } from 'src/helpers/types/admin/user.type';
 
-export class UserLoginResponse extends PickType(SuccessResponse, [
+export class AdminUserLoginResponse extends PickType(SuccessResponse, [
   'message',
   'accessToken',
   'refreshToken',

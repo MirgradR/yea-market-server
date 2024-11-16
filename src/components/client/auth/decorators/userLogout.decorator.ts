@@ -1,6 +1,7 @@
-import { applyDecorators, UseInterceptors } from '@nestjs/common';
+import { applyDecorators, HttpCode, UseInterceptors } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiUnauthorizedResponse,
@@ -12,12 +13,12 @@ export function UserLogoutOperation() {
   return applyDecorators(
     ApiOperation({ summary: 'User logout' }),
     ApiBearerAuth(),
-    ApiResponse({
-      status: 200,
+    ApiOkResponse({
       description: 'Log out successfully.',
       type: SuccessMessageType,
     }),
     UseInterceptors(ClearCookieInterceptor),
     ApiUnauthorizedResponse({ description: 'Refresh token not provided.' }),
+    HttpCode(200),
   );
 }

@@ -2,6 +2,7 @@ import { applyDecorators, UseInterceptors } from '@nestjs/common';
 import {
   ApiBody,
   ApiConflictResponse,
+  ApiCreatedResponse,
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
@@ -16,8 +17,7 @@ export function UserRegistrationOperation() {
   return applyDecorators(
     ApiOperation({ summary: 'User registration' }),
     ApiBody({ type: UserLoginDto }),
-    ApiResponse({
-      status: 201,
+    ApiCreatedResponse({
       description: 'User registration successful!',
       type: UserRegistrationResponse,
     }),

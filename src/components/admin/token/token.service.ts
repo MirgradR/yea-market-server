@@ -41,7 +41,7 @@ export class AdminTokenService {
       },
     );
 
-    this.logger.log(`Generated tokens for user with ID ${payload.id}`);
+    this.logger.log(`Созданы токены для пользователя с ID ${payload.id}`);
 
     return {
       accessToken,
@@ -55,12 +55,16 @@ export class AdminTokenService {
     });
 
     if (userToken) {
-      this.logger.log(`Updating refresh token for user with ID ${adminId}`);
+      this.logger.log(
+        `Обновление refresh токена для пользователя с ID ${adminId}`,
+      );
       userToken.refreshToken = refreshToken;
       return this.tokensRepository.save(userToken);
     }
 
-    this.logger.log(`Saving refresh token for user with ID ${adminId}`);
+    this.logger.log(
+      `Сохранение refresh токена для пользователя с ID ${adminId}`,
+    );
     const token = this.tokensRepository.create({ refreshToken, adminId });
     return this.tokensRepository.save(token);
   }
@@ -72,11 +76,11 @@ export class AdminTokenService {
         this.configService.getOrThrow<string>('JWT_ADMIN_ACCESS_SECRET'),
       );
 
-      this.logger.log(`Validated access token`);
+      this.logger.log(`Access токен подтвержден`);
 
       return token as AdminTokenDto;
     } catch (err: any) {
-      this.logger.error(`Failed to validate access token: ${err.message}`);
+      this.logger.error(`Ошибка подтверждения access токена: ${err.message}`);
       throw new UnauthorizedException();
     }
   }
@@ -88,11 +92,11 @@ export class AdminTokenService {
         this.configService.getOrThrow<string>('JWT_ADMIN_REFRESH_SECRET'),
       );
 
-      this.logger.log(`Validated refresh token`);
+      this.logger.log(`Refresh токен подтвержден`);
 
       return token as AdminTokenDto;
     } catch (err: any) {
-      this.logger.error(`Failed to validate refresh token: ${err.message}`);
+      this.logger.error(`Ошибка подтверждения refresh токена: ${err.message}`);
       throw new UnauthorizedException('Invalid token!');
     }
   }
@@ -101,10 +105,11 @@ export class AdminTokenService {
     const token = await this.findToken(refreshToken);
 
     if (!token) {
+      this.logger.log(`Refresh токен не найден`);
       throw new NotFoundException('Refresh token not found!');
     }
 
-    this.logger.log(`Deleting refresh token`);
+    this.logger.log(`Удаление refresh токена`);
     await this.tokensRepository.delete({ id: token.id });
     return { message: 'Token deleted successfully.' };
   }
@@ -116,7 +121,7 @@ export class AdminTokenService {
       });
       return token;
     } catch (err: any) {
-      this.logger.error(`Failed to find token: ${err.message}`);
+      this.logger.error(`Ошибка поиска токена: ${err.message}`);
       throw new UnauthorizedException(
         'Token not found! Please register first!',
       );
@@ -134,7 +139,7 @@ export class AdminTokenService {
       },
     );
 
-    this.logger.log(`Generated reset token for user with ID ${payload.id}`);
+    this.logger.log(`Создан reset токен для пользователя с ID ${payload.id}`);
 
     return resetToken;
   }
@@ -146,11 +151,11 @@ export class AdminTokenService {
         this.configService.getOrThrow<string>('JWT_ADMIN_RESET_SECRET'),
       );
 
-      this.logger.log(`Validated reset token`);
+      this.logger.log(`Reset токен подтвержден`);
 
       return token as AdminTokenDto;
     } catch (err: any) {
-      this.logger.error(`Failed to validate reset token: ${err.message}`);
+      this.logger.error(`Ошибка подтверждения reset токена: ${err.message}`);
       throw new UnauthorizedException('Invalid token!');
     }
   }

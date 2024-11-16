@@ -21,6 +21,13 @@ import { CategoryEntity } from '../category/entities/category.entity';
 import { ColorEntity } from './entities/colors.entity';
 import { ProductCategoryEntity } from '../category/entities/productCategory.entity';
 import { CreateColorDto } from './dto/createColor.dto';
+import { ProductsOrderEnum } from '../../helpers/constants/productsOrder.enum';
+import { OrderType } from 'src/helpers/constants';
+import { GetProductsDto, GetProductsQuery } from './dto/getProducts.query';
+import { ReviewsEntity } from '../reviews/entities/reviews.entity';
+import { GetOneProductResponse } from './responses/getOneProductResponse';
+import { TagsService } from '../tags/tags.service';
+import { CreateTagDto } from '../tags/dto/createTag.dto';
 
 @Injectable()
 export class ProductService {
@@ -36,17 +43,20 @@ export class ProductService {
     @InjectRepository(ColorEntity)
     private colorRepository: Repository<ColorEntity>,
     private mediaService: MediaService,
+    @InjectRepository(ReviewsEntity)
+    private reviewsRepository: Repository<ReviewsEntity>,
+    private tagsService: TagsService,
   ) {}
 
   async createProduct(dto: CreateProductDto): Promise<CreateProductResponse> {
-    this.logger.log('Creating product with title: ' + dto.title);
+    this.logger.log(`Создание продукта с названием: ${dto.title}`);
 
     const existingProduct = await this.productRepository.findOne({
       where: { title: dto.title },
     });
 
     if (existingProduct) {
-      this.logger.error(`Product with title ${dto.title} already exists`);
+      this.logger.error(`Продукт с названием ${dto.title} уже существует`);
       throw new ConflictException(
         `Product with title ${dto.title} already exists`,
       );
@@ -60,12 +70,11 @@ export class ProductService {
       quantity: dto.quantity,
       detailsDesc: dto.detailsDesc,
       dimensions: dto.dimensions,
-      tags: dto.tags,
     });
 
     await this.productRepository.save(newProduct);
 
-    this.logger.log(`Product created with ID: ${newProduct.id}`);
+    this.logger.log(`Продукт успешно создан с ID: ${newProduct.id}`);
     console.log(dto.categoryIds);
     if (dto.categoryIds && dto.categoryIds.length > 0) {
       const existingCategories = await this.productCategoryRepository.find({
@@ -96,31 +105,94 @@ export class ProductService {
       await this.createProductColors(newProduct.id, dto.colors);
     }
 
-    this.logger.log(`Product created successfully: ${newProduct.id}`);
-    return { message: 'Product created successfully', product: newProduct };
+    this.logger.log(`Продукт успешно создан: ${newProduct.id}`);
+    return { message: 'Продукт успешно создан', product: newProduct };
   }
 
-  async getProducts(): Promise<GetProductsResponse> {
-    this.logger.log('Retrieving all products');
-    const products = await this.productRepository.find({
-      relations: { colors: true, medias: true },
-    });
-    this.logger.log(`Retrieved ${products.length} products`);
-    return { products };
+  async getProducts(
+    query?: GetProductsQuery,
+    dto?: GetProductsDto,
+  ): Promise<GetProductsResponse> {
+    const {
+      page = 1,
+      take = 10,
+      q = '',
+      orderBy = ProductsOrderEnum.createdAt,
+      order = OrderType.DESC,
+    } = query;
+
+    this.logger.log('Получение списка всех продуктов');
+
+    const productQuery = this.productRepository
+      .createQueryBuilder('products')
+      .leftJoinAndSelect('products.colors', 'colors')
+      .leftJoinAndSelect('products.medias', 'medias')
+      .leftJoinAndSelect('products.productCategory', 'productCategory')
+      .leftJoinAndSelect('products.tags', 'tags')
+      .where('products.stockStatus = true');
+
+    if (q) {
+      productQuery.andWhere('products.title ILIKE :q', { q: `%${q}%` });
+    }
+
+    if (query.minPrice && query.maxPrice) {
+      productQuery.andWhere('products.price BETWEEN :minPrice AND :maxPrice', {
+        minPrice: query.minPrice,
+        maxPrice: query.maxPrice,
+      });
+    }
+
+    if (dto.categoryIds && dto.categoryIds.length > 0) {
+      productQuery.andWhere('productCategory.categoryId IN (:...categoryIds)', {
+        categoryIds: dto.categoryIds,
+      });
+    }
+
+    if (dto.color) {
+      productQuery.andWhere('colors.title IN (:...color)', {
+        color: dto.color,
+      });
+    }
+
+    if (query.tag) {
+      productQuery.andWhere('tags.tag ILIKE :tag', {
+        tag: `%${query.tag}%`,
+      });
+    }
+
+    const [products, totalCount] = await productQuery
+      .orderBy(`products.${orderBy}`, order)
+      .take(take)
+      .skip((page - 1) * take)
+      .getManyAndCount();
+
+    this.logger.log(`Получено ${products.length} продуктов`);
+    return { totalCount, products };
   }
 
-  async getOneProduct(productId: string): Promise<ProductType> {
-    this.logger.log('Retrieving product with ID: ' + productId);
-    const product = await this.findProductById(productId);
-    this.logger.log('Retrieved product: ' + productId);
-    return product;
+  async getOneProduct(productId: string): Promise<GetOneProductResponse> {
+    this.logger.log(`Получение продукта с ID: ${productId}`);
+    const product = await this.productRepository
+      .createQueryBuilder('products')
+      .leftJoinAndSelect('products.colors', 'colors')
+      .leftJoinAndSelect('products.medias', 'medias')
+      .leftJoinAndSelect('products.tags', 'tags')
+      .where('products.id = :productId', { productId })
+      .getOne();
+
+    const productReviewMiddleStar = await this.reviewsRepository.average(
+      'star',
+      { productId: productId },
+    );
+    this.logger.log(`Продукт с ID: ${productId} успешно получен`);
+    return { product, productReviewMiddleStar };
   }
 
   async updateProduct(
     productId: string,
     dto: UpdateProductDto,
   ): Promise<UpdateProductResponse> {
-    this.logger.log('Updating product with ID: ' + productId);
+    this.logger.log(`Обновление продукта с ID: ${productId}`);
     const product = await this.findProductById(productId);
 
     await this.productRepository.update(
@@ -133,9 +205,9 @@ export class ProductService {
         quantity: dto.quantity,
         detailsDesc: dto.detailsDesc,
         dimensions: dto.dimensions,
-        tags: dto.tags,
       },
     );
+
     await this.productCategoryRepository.delete({ productId: product.id });
     if (dto.categoryIds && dto.categoryIds.length > 0) {
       const existingCategories = await this.productCategoryRepository.find({
@@ -167,31 +239,35 @@ export class ProductService {
       await this.createProductColors(product.id, dto.colors);
     }
 
-    this.logger.log(`Product updated successfully: ${product.id}`);
-    return { message: 'Product updated successfully', product };
+    this.logger.log(`Продукт с ID: ${product.id} успешно обновлен`);
+    return { message: 'Продукт успешно обновлен', product };
   }
 
   async deleteProduct(productId: string): Promise<SuccessMessageType> {
-    this.logger.log('Deleting product with ID: ' + productId);
+    this.logger.log(`Удаление продукта с ID: ${productId}`);
     const product = await this.findProductById(productId);
+    const productImageIds = product.medias.map((media) => {
+      return media.id;
+    });
+    await this.mediaService.deleteMedias(productImageIds);
     await this.productRepository.delete({ id: product.id });
-    this.logger.log(`Product deleted successfully: ${productId}`);
-    return { message: 'Product deleted successfully' };
+    this.logger.log(`Продукт с ID: ${productId} успешно удален`);
+    return { message: 'Продукт успешно удален' };
   }
 
   async createProductColor(
     productId: string,
     colorDto: CreateColorDto,
   ): Promise<CreateProductColorResponse> {
-    this.logger.log(`Adding color to product with ID: ${productId}`);
+    this.logger.log(`Добавление цвета к продукту с ID: ${productId}`);
     const color = this.colorRepository.create({
       ...colorDto,
       productId: productId,
     });
     await this.colorRepository.save(color);
 
-    this.logger.log(`Product color added successfully: ${color.id}`);
-    return { message: 'Product color added successfully', color };
+    this.logger.log(`Цвет успешно добавлен к продукту с ID: ${color.id}`);
+    return { message: 'Цвет продукта успешно добавлен', color };
   }
 
   async deleteProductColor(
@@ -199,7 +275,7 @@ export class ProductService {
     colorId: string,
   ): Promise<SuccessMessageType> {
     this.logger.log(
-      `Deleting color with ID: ${colorId} from product with ID: ${productId}`,
+      `Удаление цвета с ID: ${colorId} из продукта с ID: ${productId}`,
     );
     const result: DeleteResult = await this.colorRepository.delete({
       productId,
@@ -208,12 +284,12 @@ export class ProductService {
 
     if (result.affected === 0) {
       throw new NotFoundException(
-        `Color with ID ${colorId} not found for product ${productId}`,
+        `Color with id ${colorId} not found for product with id ${productId}`,
       );
     }
 
-    this.logger.log(`Product color deleted successfully: ${colorId}`);
-    return { message: 'Product color deleted successfully' };
+    this.logger.log(`Цвет продукта успешно удален: ${colorId}`);
+    return { message: 'Цвет продукта успешно удален' };
   }
 
   async createProductCategory(
@@ -221,7 +297,7 @@ export class ProductService {
     categoryId: string,
   ): Promise<SuccessMessageType> {
     this.logger.log(
-      `Adding category with ID: ${categoryId} to product with ID: ${productId}`,
+      `Добавление категории с ID: ${categoryId} к продукту с ID: ${productId}`,
     );
     const category = this.productCategoryRepository.create({
       productId,
@@ -229,8 +305,8 @@ export class ProductService {
     });
     await this.categoryRepository.save(category);
 
-    this.logger.log(`Product category added successfully: ${categoryId}`);
-    return { message: 'Product category added successfully' };
+    this.logger.log(`Категория успешно добавлена к продукту: ${categoryId}`);
+    return { message: 'Категория продукта успешно добавлена' };
   }
 
   async deleteProductCategory(
@@ -238,7 +314,7 @@ export class ProductService {
     categoryId: string,
   ): Promise<SuccessMessageType> {
     this.logger.log(
-      `Deleting category with ID: ${categoryId} from product with ID: ${productId}`,
+      `Удаление категории с ID: ${categoryId} из продукта с ID: ${productId}`,
     );
     const result = await this.productCategoryRepository.delete({
       categoryId,
@@ -247,24 +323,26 @@ export class ProductService {
 
     if (result.affected === 0) {
       throw new NotFoundException(
-        `Category with ID ${categoryId} not found for product ${productId}`,
+        `Category with id ${categoryId} not found for product with id ${productId}`,
       );
     }
 
-    this.logger.log(`Product category deleted successfully: ${categoryId}`);
-    return { message: 'Product category deleted successfully' };
+    this.logger.log(`Категория продукта успешно удалена: ${categoryId}`);
+    return { message: 'Категория продукта успешно удалена' };
   }
 
   async uploadImage(
     image: ITransformedFile,
     productId: string,
   ): Promise<SuccessMessageType> {
-    this.logger.log(`Uploading image for product with ID: ${productId}`);
+    this.logger.log(`Загрузка изображения для продукта с ID: ${productId}`);
     const product = await this.findProductById(productId);
 
     await this.mediaService.createFileMedia(image, product.id, 'productId');
-    this.logger.log(`Image uploaded successfully for product ID: ${productId}`);
-    return { message: 'Image uploaded successfully' };
+    this.logger.log(
+      `Изображение успешно загружено для продукта с ID: ${productId}`,
+    );
+    return { message: 'Изображение успешно загружено' };
   }
 
   async deleteImage(
@@ -272,23 +350,52 @@ export class ProductService {
     imageId: string,
   ): Promise<SuccessMessageType> {
     this.logger.log(
-      `Deleting image with ID: ${imageId} from product with ID: ${productId}`,
+      `Удаление изображения с ID: ${imageId} из продукта с ID: ${productId}`,
     );
     await this.findProductById(productId);
     await this.mediaService.deleteOneMedia(imageId);
-    this.logger.log(`Image deleted successfully: ${imageId}`);
-    return { message: 'Image deleted successfully' };
+    this.logger.log(`Изображение успешно удалено: ${imageId}`);
+    return { message: 'Изображение успешно удалено' };
+  }
+
+  async getNewArrivedProducts() {
+    this.logger.log('Получение новых поступлений');
+    const products = await this.productRepository.find({
+      relations: { colors: true, medias: true, tags: true },
+      take: 4,
+      order: { createdAt: 'desc' },
+    });
+
+    return products;
+  }
+
+  async createTag(
+    dto: CreateTagDto,
+    productId: string,
+  ): Promise<SuccessMessageType> {
+    this.logger.log(`Создание тега для продукта с ID: ${productId}`);
+    const product = await this.findProductById(productId);
+    await this.tagsService.createTag(dto.tag, product.id, 'productId');
+    this.logger.log('Тег продукта успешно создан!');
+    return { message: 'Тег продукта успешно создан!' };
+  }
+
+  async deleteTag(tagId: string): Promise<SuccessMessageType> {
+    this.logger.log(`Удаление тега с ID: ${tagId}`);
+    await this.tagsService.deleteTag(tagId);
+    this.logger.log('Тег успешно удален!');
+    return { message: 'Тег успешно удален!' };
   }
 
   private async findProductById(productId: string): Promise<ProductType> {
-    this.logger.log('Finding product with ID: ' + productId);
+    this.logger.log(`Поиск продукта с ID: ${productId}`);
     const product = await this.productRepository.findOne({
       where: { id: productId },
       relations: { colors: true, medias: true },
     });
     if (!product) {
-      this.logger.error('Product with this ID not found: ' + productId);
-      throw new NotFoundException('Product with this id not found');
+      this.logger.error(`Product with id ${productId} not found!`);
+      throw new NotFoundException('Product with this id not found!');
     }
     return product;
   }
@@ -297,12 +404,18 @@ export class ProductService {
     productId: string,
     colors: CreateColorDto[],
   ) {
-    this.logger.log(`Adding colors to product with ID: ${productId}`);
+    this.logger.log(`Добавление цветов к продукту с ID: ${productId}`);
     const colorEntities = colors.map((color) => ({
       ...color,
       productId: productId,
     }));
     await this.colorRepository.save(colorEntities);
-    this.logger.log(`Colors added to product ID: ${productId}`);
+    this.logger.log(`Цвета успешно добавлены к продукту с ID: ${productId}`);
+  }
+
+  async getColors() {
+    this.logger.log('Получение всех цветов');
+    const colors = await this.colorRepository.find();
+    return colors;
   }
 }
